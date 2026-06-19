@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOM Recorder — Atomgrid Sales</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:          #F5F4F0;
+    --surface:     #FFFFFF;
+    --surface2:    #F9F8F5;
+    --border:      #E4E2DB;
+    --border-md:   #C9C7BF;
+    --text:        #1C1C1A;
+    --muted:       #6A6961;
+    --hint:        #A09E97;
+    --accent:      #1549C9;
+    --accent-bg:   #EDF1FD;
+    --accent-bdr:  #C1CFF7;
+    --danger:      #D63B3B;
+    --danger-bg:   #FFF1F1;
+    --warn:        #B06B10;
+    --warn-bg:     #FFF6E8;
+    --warn-bdr:    #F5D48A;
+    --green:       #2D6A0F;
+    --green-bg:    #F0F7E6;
+    --green-bdr:   #BDD99A;
+    --purple:      #5B30B5;
+    --purple-bg:   #F3EEFF;
+    --r-sm:        6px;
+    --r:           10px;
+    --r-lg:        14px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── TOP BAR ─────────────────────────────────────────── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 20px;
+    height: 52px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 20;
+  }
+  .logo { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+  .logo span { color: var(--accent); }
+  .topbar-tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--hint); padding: 2px 8px; background: var(--bg); border-radius: 99px; }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-bg); border: 1px solid var(--accent-bdr); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--accent); }
+
+  /* ── MAIN LAYOUT ─────────────────────────────────────── */
+  .layout { display: grid; grid-template-columns: 260px 1fr 300px; min-height: calc(100vh - 52px); }
+
+  /* ── LEFT PANEL ─────────────────────────────────────── */
+  .left-panel {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-head {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .panel-head-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--hint); margin-bottom: 10px; }
+
+  .form-group { margin-bottom: 10px; }
+  .form-group label { font-size: 11px; font-weight: 600; color: var(--muted); display: block; margin-bottom: 4px; }
+
+  input[type="text"], select, textarea {
+    width: 100%;
+    padding: 7px 9px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    -webkit-appearance: none; appearance: none;
+  }
+  input[type="text"]:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(21,73,201,0.1);
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%236A6961' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    padding-right: 26px;
+    cursor: pointer;
+  }
+
+  /* company search */
+  .company-search-wrap { position: relative; }
+  .company-search-wrap input { padding-left: 28px; }
+  .search-icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--hint); pointer-events: none; }
+  .company-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    z-index: 50;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+  }
+  .company-dropdown.open { display: block; }
+  .company-option {
+    padding: 7px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .company-option:hover { background: var(--bg); }
+  .company-option .co-initials { width: 22px; height: 22px; border-radius: 4px; background: var(--accent-bg); color: var(--accent); font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .company-option .co-name { font-size: 12px; font-weight: 500; }
+  .company-option .co-rev { font-size: 10px; color: var(--hint); margin-left: auto; }
+
+  /* lang toggle */
+  .lang-toggle { display: flex; gap: 4px; }
+  .lang-btn { flex: 1; padding: 5px 4px; font-size: 11px; font-weight: 500; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--muted); cursor: pointer; text-align: center; transition: all 0.15s; }
+  .lang-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+  .lang-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); font-weight: 700; }
+
+  /* attendees */
+  .panel-body { flex: 1; overflow-y: auto; padding: 12px 16px; }
+  .att-row { display: flex; align-items: center; gap: 7px; padding: 5px 7px; border-radius: var(--r-sm); background: var(--bg); margin-bottom: 5px; }
+  .att-av { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; flex-shrink: 0; }
+  .att-name { font-size: 12px; font-weight: 500; flex: 1; }
+  .att-tag { font-size: 9px; color: var(--hint); }
+  .att-remove { background: none; border: none; color: var(--hint); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 2px; }
+  .att-remove:hover { color: var(--danger); }
+  .add-att-row { display: flex; gap: 6px; margin-top: 8px; }
+  .add-att-row input { flex: 1; }
+  .small-btn { padding: 6px 10px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--muted); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+  .small-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+  .divider { height: 1px; background: var(--border); margin: 10px 0; }
+
+  /* past meetings */
+  .past-item { padding: 7px 9px; border-radius: var(--r-sm); cursor: pointer; margin-bottom: 3px; transition: background 0.12s; }
+  .past-item:hover { background: var(--bg); }
+  .past-item .pi-company { font-size: 12px; font-weight: 600; }
+  .past-item .pi-meta { font-size: 10px; color: var(--hint); margin-top: 1px; }
+
+  /* ── CENTER PANE ──────────────────────────────────────── */
+  .center-pane { display: flex; flex-direction: column; overflow: hidden; }
+
+  /* recorder */
+  .recorder-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    flex-shrink: 0;
+  }
+
+  .meeting-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .meeting-title-display { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+  .meeting-company-display { font-size: 12px; color: var(--muted); }
+
+  .badge { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 99px; font-size: 10px; font-weight: 700; letter-spacing: 0.03em; }
+  .badge-type { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-bdr); }
+  .badge-lang { background: var(--purple-bg); color: var(--purple); border: 1px solid #D4BBFF; }
+  .badge-live { background: var(--danger); color: #fff; animation: blink 1.4s ease-in-out infinite; }
+  .badge-done { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bdr); }
+  .badge-count { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+
+  .rec-row { display: flex; align-items: center; gap: 14px; }
+
+  .rec-btn-wrap { position: relative; flex-shrink: 0; }
+  .rec-ring { position: absolute; inset: -5px; border-radius: 50%; border: 2px solid transparent; pointer-events: none; }
+  .rec-ring.pulsing { border-color: var(--danger); animation: rpulse 1.3s ease-in-out infinite; }
+  @keyframes rpulse { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.14);opacity:0.3;} }
+  .rec-btn { width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; position: relative; z-index: 1; }
+  .rec-btn:hover { transform: scale(1.06); }
+  .rec-btn:active { transform: scale(0.96); }
+  .rec-btn.idle { background: #FFE4E4; color: var(--danger); }
+  .rec-btn.recording { background: var(--danger); color: #fff; }
+  .rec-btn.paused { background: var(--warn-bg); color: var(--warn); }
+
+  .rec-meta { flex: 1; }
+  .rec-status { font-size: 12px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); animation: blink 1.1s ease-in-out infinite; }
+  .rec-timer { font-size: 26px; font-weight: 800; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; color: var(--text); line-height: 1; }
+
+  /* waveform */
+  .waveform { flex: 1; height: 50px; display: flex; align-items: center; gap: 2px; overflow: hidden; }
+  .wbar { width: 3px; border-radius: 2px; background: var(--accent); flex-shrink: 0; opacity: 0.35; transition: height 0.09s ease, opacity 0.09s ease; }
+
+  /* secondary controls */
+  .rec-actions { display: flex; align-items: center; gap: 6px; margin-top: 11px; padding-top: 11px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .action-btn { display: flex; align-items: center; gap: 4px; padding: 5px 10px; border: 1px solid var(--border); border-radius: var(--r-sm); font-size: 11px; font-weight: 500; color: var(--muted); background: var(--surface); cursor: pointer; transition: all 0.15s; }
+  .action-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+  .action-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+  .stop-btn { margin-left: auto; display: flex; align-items: center; gap: 5px; padding: 6px 14px; border: 1px solid #FFBBBB; border-radius: var(--r-sm); font-size: 12px; font-weight: 700; color: var(--danger); background: var(--danger-bg); cursor: pointer; transition: all 0.15s; }
+  .stop-btn:hover { background: #FFE4E4; border-color: var(--danger); }
+
+  /* transcript */
+  .transcript-area {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+  }
+  .section-bar { display: flex; align-items: center; gap: 7px; padding: 9px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--surface); }
+  .section-bar-title { font-size: 11px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.05em; flex: 1; }
+  .icon-btn { display: flex; align-items: center; gap: 4px; padding: 4px 9px; border: 1px solid var(--border); border-radius: var(--r-sm); font-size: 11px; color: var(--muted); background: none; cursor: pointer; transition: all 0.12s; }
+  .icon-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-bg); }
+  .icon-btn svg { width: 12px; height: 12px; }
+
+  .transcript-scroll { flex: 1; overflow-y: auto; padding: 12px 20px; display: flex; flex-direction: column; gap: 10px; }
+  .t-entry { display: flex; gap: 9px; align-items: flex-start; }
+  .spk-chip { flex-shrink: 0; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px; margin-top: 2px; }
+  .spk-a { background: var(--accent-bg); color: var(--accent); }
+  .spk-b { background: var(--green-bg); color: var(--green); }
+  .spk-c { background: var(--warn-bg); color: var(--warn); }
+  .spk-d { background: var(--purple-bg); color: var(--purple); }
+  .t-body { flex: 1; }
+  .t-text { font-size: 13px; line-height: 1.6; color: var(--text); }
+  .t-time { font-size: 10px; color: var(--hint); margin-top: 1px; }
+  .t-live { opacity: 0.5; }
+  .typing-dots { display: flex; align-items: center; gap: 3px; padding: 4px 0; }
+  .tdot { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); animation: tdot 1.2s ease-in-out infinite; }
+  .tdot:nth-child(2) { animation-delay: 0.2s; }
+  .tdot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes tdot { 0%,60%,100%{transform:translateY(0);} 30%{transform:translateY(-5px);} }
+
+  /* ── RIGHT PANEL (MOM) ─────────────────────────────── */
+  .right-panel { background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+
+  .mom-body { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+  .mom-sec { display: flex; flex-direction: column; gap: 7px; }
+  .mom-sec-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--hint); }
+
+  .mom-row { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; line-height: 1.5; color: var(--text); padding: 5px 8px; border-radius: var(--r-sm); background: var(--bg); }
+  .mom-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .dot-blue  { background: var(--accent); }
+  .dot-amber { background: #E89520; }
+  .dot-green { background: #44A010; }
+  .dot-gray  { background: var(--hint); }
+
+  .action-card { padding: 8px 10px; border-radius: var(--r-sm); background: var(--warn-bg); border: 1px solid var(--warn-bdr); font-size: 12px; line-height: 1.5; }
+  .action-card .ac-owner { font-size: 10px; font-weight: 700; color: var(--warn); margin-bottom: 2px; }
+  .decision-card { padding: 8px 10px; border-radius: var(--r-sm); background: var(--green-bg); border: 1px solid var(--green-bdr); font-size: 12px; line-height: 1.5; color: var(--text); }
+  .req-card { padding: 8px 10px; border-radius: var(--r-sm); background: var(--accent-bg); border: 1px solid var(--accent-bdr); font-size: 12px; line-height: 1.5; color: var(--text); }
+
+  .att-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .att-pill { padding: 2px 9px; border-radius: 99px; background: var(--accent-bg); color: var(--accent); font-size: 11px; font-weight: 500; border: 1px solid var(--accent-bdr); }
+
+  .mom-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .mom-info-item { padding: 6px 8px; background: var(--bg); border-radius: var(--r-sm); }
+  .mom-info-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--hint); margin-bottom: 1px; }
+  .mom-info-val { font-size: 12px; font-weight: 500; color: var(--text); }
+
+  /* MOM footer */
+  .mom-footer { border-top: 1px solid var(--border); padding: 11px 16px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+  .ai-bar { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--muted); padding: 6px 10px; background: var(--bg); border-radius: var(--r-sm); }
+  .spinner { width: 12px; height: 12px; border: 1.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .export-row { display: flex; gap: 6px; }
+  .export-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 6px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .export-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+  .export-btn svg { width: 13px; height: 13px; }
+
+  .wa-btn { flex: 1.5; background: #25D366; color: #fff; border-color: #1fb659; font-size: 12px; font-weight: 700; }
+  .wa-btn:hover { background: #1fb659; border-color: #19a04b; color: #fff; }
+
+  /* Toast */
+  .toast-wrap { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 999; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+  .toast { background: #1C1C1A; color: #fff; font-size: 13px; padding: 9px 18px; border-radius: 99px; white-space: nowrap; animation: tin 0.22s ease; }
+  @keyframes tin { from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
+
+
+  /* ── MOBILE RESPONSIVE ───────────────────────────────────── */
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; grid-template-rows: auto; }
+    .left-panel { border-right: none; border-bottom: 1px solid var(--border); max-height: 280px; }
+    .right-panel { border-left: none; border-top: 1px solid var(--border); }
+    .center-pane { min-height: 60vh; }
+    .rec-timer { font-size: 20px; }
+    .rec-actions { gap: 4px; }
+    .action-btn { font-size: 10px; padding: 4px 7px; }
+    .waveform { display: none; }
+    .topbar { padding: 0 12px; gap: 8px; }
+  }
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="logo">Atom<span>grid</span></div>
+  <nav style="display:flex;gap:4px;margin-left:12px;">
+    <a href="index.html" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:99px;font-size:12px;font-weight:700;text-decoration:none;background:var(--accent-bg);color:var(--accent);">● Recorder</a>
+    <a href="dashboard.html" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:99px;font-size:12px;font-weight:500;text-decoration:none;color:var(--muted);">⊞ Dashboard</a>
+  </nav>
+  <div class="topbar-right">
+    <span style="font-size:12px;color:var(--muted);" id="today-date"></span>
+    <div class="avatar">DK</div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ═══ LEFT PANEL ═══ -->
+  <aside class="left-panel">
+    <div class="panel-head">
+      <div class="panel-head-label">Meeting setup</div>
+
+      <!-- Company search -->
+      <div class="form-group">
+        <label>Company name</label>
+        <div class="company-search-wrap">
+          <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="company-input" placeholder="Search company..." autocomplete="off" oninput="searchCompany(this.value)" onfocus="searchCompany(this.value)">
+          <div class="company-dropdown" id="company-dropdown"></div>
+        </div>
+      </div>
+
+      <!-- Meeting type -->
+      <div class="form-group">
+        <label>Meeting type</label>
+        <select id="meeting-type" onchange="onTypeChange(this)">
+          <option value="supply">Supply meeting</option>
+          <option value="office">Office meeting</option>
+          <option value="client">Client meeting</option>
+          <option value="domestic">Domestic meeting</option>
+          <option value="review">Review meeting</option>
+          <option value="ops">Operations meeting</option>
+          <option value="agm">AGM / Board meeting</option>
+          <option value="hr">HR meeting</option>
+        </select>
+      </div>
+
+      <!-- Custom title -->
+      <div class="form-group">
+        <label>Meeting title <span style="color:var(--hint);font-weight:400;">(optional)</span></label>
+        <input type="text" id="meeting-title" placeholder="e.g. Kharif planning discussion">
+      </div>
+
+      <!-- Language -->
+      <div class="form-group">
+        <label>Language</label>
+        <div class="lang-toggle">
+          <button class="lang-btn" onclick="setLang(this)">English</button>
+          <button class="lang-btn active" onclick="setLang(this)">Hindi + EN</button>
+          <button class="lang-btn" onclick="setLang(this)">Hindi</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attendees -->
+    <div class="panel-body">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--hint);margin-bottom:8px;">Attendees</div>
+
+      <div id="att-list"></div>
+
+      <div class="add-att-row">
+        <input type="text" id="att-input" placeholder="Add attendee name…" onkeydown="if(event.key==='Enter')addAttendee()">
+        <button class="small-btn" onclick="addAttendee()">+ Add</button>
+      </div>
+
+
+    </div>
+  </aside>
+
+  <!-- ═══ CENTER PANE ═══ -->
+  <main class="center-pane">
+
+    <!-- RECORDER BAR -->
+    <div class="recorder-bar">
+      <div class="meeting-header">
+        <span class="meeting-title-display" id="meeting-title-display">Supply meeting</span>
+        <span class="meeting-company-display" id="company-display">— select company →</span>
+        <span class="badge badge-type" id="type-badge">Supply</span>
+        <span class="badge badge-lang">Hindi + EN</span>
+        <span class="badge badge-live" id="live-badge" style="display:none;">● LIVE</span>
+      </div>
+
+      <div class="rec-row">
+        <div class="rec-btn-wrap">
+          <div class="rec-ring" id="rec-ring"></div>
+          <button class="rec-btn idle" id="rec-btn" onclick="toggleRec()" aria-label="Start recording">
+            <svg id="rec-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="2" width="6" height="12" rx="3"/>
+              <path d="M19 10a7 7 0 0 1-14 0"/>
+              <line x1="12" y1="17" x2="12" y2="22"/>
+              <line x1="8" y1="22" x2="16" y2="22"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="rec-meta">
+          <div class="rec-status">
+            <div class="live-dot" id="live-dot" style="display:none;"></div>
+            <span id="rec-status-text">Tap to start recording</span>
+          </div>
+          <div class="rec-timer" id="rec-timer">00:00:00</div>
+        </div>
+
+        <div class="waveform" id="waveform"></div>
+      </div>
+
+      <div class="rec-actions">
+        <button class="action-btn" onclick="toast('Note added to transcript')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Add note
+        </button>
+        <button class="action-btn" onclick="flagAction()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          Flag action item
+        </button>
+        <button class="action-btn" onclick="toast('Decision marked in MOM')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Mark decision
+        </button>
+        <button class="action-btn" onclick="toast('Requirement noted in MOM')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          Note requirement
+        </button>
+        <button class="stop-btn" onclick="stopRec()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+          Stop &amp; finalise
+        </button>
+      </div>
+    </div>
+
+    <!-- TRANSCRIPT -->
+    <div class="transcript-area">
+      <div class="section-bar">
+        <span class="section-bar-title">Live transcript</span>
+        <span class="badge badge-live" id="transcript-live-badge" style="display:none;">LIVE</span>
+        <span class="badge badge-count" style="margin-left:4px;" id="line-count">0 lines</span>
+        <button class="icon-btn" style="margin-left:8px;" onclick="toast('Transcript copied')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
+        </button>
+      </div>
+
+      <div class="transcript-scroll" id="transcript-scroll">
+        <!-- Empty on load — transcript fills when recording starts -->
+        <div id="transcript-empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;text-align:center;color:var(--hint);">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;opacity:0.4;"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+          <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px;">No transcript yet</div>
+          <div style="font-size:12px;">Click the mic button to start recording.<br>Hindi + English both supported.</div>
+        </div>
+        <div class="t-entry t-live" id="live-indicator" style="display:none;">
+          <div><div class="spk-chip spk-a" style="opacity:0.5;">…</div></div>
+          <div class="t-body">
+            <div class="typing-dots">
+              <div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ═══ RIGHT PANEL — MOM ═══ -->
+  <aside class="right-panel">
+    <div class="section-bar">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span class="section-bar-title">Minutes of meeting</span>
+      <span class="badge" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-bdr);">AI Draft</span>
+      <button class="icon-btn" style="margin-left:auto;" onclick="toast('Regenerating MOM…')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.18-4.98"/></svg>
+      </button>
+    </div>
+
+    <div class="mom-body" id="mom-body">
+
+      <!-- Empty state — replaced by Claude-generated MOM when recording starts -->
+      <div id="mom-empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px 16px;text-align:center;color:var(--hint);">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;opacity:0.4;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px;">MOM will appear here</div>
+        <div style="font-size:12px;line-height:1.6;">Claude will auto-generate the minutes<br>after your first few lines of transcript.<br><br>
+          <span style="color:var(--accent);font-weight:600;">1.</span> Select company &amp; meeting type<br>
+          <span style="color:var(--accent);font-weight:600;">2.</span> Click mic to start recording<br>
+          <span style="color:var(--accent);font-weight:600;">3.</span> Speak — MOM fills automatically
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="mom-footer">
+      <div class="ai-bar">
+        <div class="spinner" id="ai-spinner" style="display:none;"></div>
+        <span id="ai-status-text" style="color:var(--hint);">Claude will generate MOM after recording starts</span>
+      </div>
+      <div class="export-row">
+        <button class="export-btn" onclick="toast('MOM text copied!')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
+        </button>
+        <button class="export-btn" onclick="toast('Exporting Excel…')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Excel
+        </button>
+        <button class="export-btn wa-btn" onclick="shareWhatsApp()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.557 4.126 1.533 5.857L.054 23.76a.5.5 0 0 0 .618.626l5.985-1.565A11.947 11.947 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.645-.52-5.145-1.42l-.362-.214-3.756.984.999-3.661-.236-.376A9.948 9.948 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          Share PDF
+        </button>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- Toast -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script src="config.js"></script>
+<script type="module">
+// ── ATTENDEE COLORS — defined first so onclick handlers can access immediately ──
+const attColors = [
+  { bg:'#EDF1FD', color:'#1549C9' }, { bg:'#F0F7E6', color:'#2D6A0F' },
+  { bg:'#FFF6E8', color:'#B06B10' }, { bg:'#F3EEFF', color:'#5B30B5' },
+  { bg:'#FFF1F1', color:'#D63B3B' },
+];
+let attColorIdx = 0;
+
+// ══════════════════════════════════════════════════════════════
+// PHASE 3 — OPENAI WHISPER REAL-TIME TRANSCRIPTION
+// Records audio in 15-second chunks → sends to Whisper API
+// Whisper transcribes Hindi + English with best-in-class accuracy
+// Transcript appends live after each chunk completes
+// ══════════════════════════════════════════════════════════════
+
+const OPENAI_KEY = CONFIG.OPENAI_KEY;
+const CHUNK_SECONDS = 10;  // transcribe every 10 seconds
+
+// ── STATE ──────────────────────────────────────────────────
+let audioStream       = null;
+let mediaRecorder     = null;
+let audioContext      = null;
+let analyser          = null;
+let waveRAF           = null;
+let isRecording       = false;
+let isMicReady        = false;
+let secs              = 0;
+let timerHandle       = null;
+
+// ── WHISPER STATE ───────────────────────────────────────────
+let chunkRecorder     = null;   // separate MediaRecorder for 15s chunks
+let chunkBuffer       = [];     // blobs for current chunk
+let chunkTimer        = null;   // interval to cut chunks
+let lineCount         = 0;
+let fullTranscript    = '';
+let speakerIdx        = 0;
+let transcriptCleared = false;
+let isTranscribing    = false;  // prevent overlapping API calls
+const spkClasses      = ['spk-a','spk-b','spk-c','spk-d'];
+
+// ── WAVEFORM ────────────────────────────────────────────────
+const wf = document.getElementById('waveform');
+const BAR_COUNT = 46;
+for (let i = 0; i < BAR_COUNT; i++) {
+  const b = document.createElement('div');
+  b.className = 'wbar';
+  b.style.height = '3px';
+  b.style.opacity = '0.15';
+  wf.appendChild(b);
+}
+const bars = Array.from(wf.querySelectorAll('.wbar'));
+
+function drawWave() {
+  if (!analyser) return;
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(data);
+  const step = Math.floor(data.length / BAR_COUNT);
+  bars.forEach((b, i) => {
+    const val = data[i * step] || 0;
+    const h   = Math.max(3, (val / 255) * 44);
+    const op  = Math.max(0.15, val / 255);
+    b.style.height  = h + 'px';
+    b.style.opacity = op.toFixed(2);
+  });
+  if (isRecording) waveRAF = requestAnimationFrame(drawWave);
+}
+
+function flattenWave() {
+  cancelAnimationFrame(waveRAF);
+  bars.forEach(b => { b.style.height = '3px'; b.style.opacity = '0.12'; });
+}
+
+// ── TIMER ───────────────────────────────────────────────────
+const timerEl    = document.getElementById('rec-timer');
+// durationEl looked up dynamically — element may be recreated by renderMOM()
+
+function fmtTime(s) {
+  const h   = Math.floor(s / 3600);
+  const m   = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+}
+
+function startTimer() {
+  clearInterval(timerHandle);
+  timerHandle = setInterval(() => {
+    secs++;
+    timerEl.textContent  = fmtTime(secs);
+    const _durEl = document.getElementById('mom-duration'); if (_durEl) _durEl.textContent = fmtTime(secs) + ' (live)';
+  }, 1000);
+}
+
+function pauseTimer() { clearInterval(timerHandle); }
+
+// ── WHISPER API CALL ─────────────────────────────────────────
+
+// ── NOISE DETECTION ──────────────────────────────────────────
+// Whisper hallucinates these phrases when audio is silence/background noise
+const WHISPER_HALLUCINATIONS = [
+  'thank you for watching', 'thank you', 'thanks for watching',
+  'please subscribe', 'like and subscribe', 'see you next time',
+  'bye bye', 'goodbye', 'welcome', 'hello', 'hi',
+  'you', 'the', '.', '...', 'um', 'uh',
+  'subtitles by', 'transcribed by', 'www.', 'http',
+  'music', '[music]', '[applause]', '[laughter]'
+];
+
+function isNoiseTranscript(text) {
+  const lower = text.toLowerCase().trim();
+  // Check against known hallucinations
+  if (WHISPER_HALLUCINATIONS.some(h => lower === h)) return true;
+  // Too few words (less than 3 real words)
+  const words = lower.split(/\s+/).filter(w => w.length > 1);
+  if (words.length < 3) return true;
+  return false;
+}
+
+async function transcribeChunk(audioBlob) {
+  if (isTranscribing) return;   // skip if previous chunk still processing
+  isTranscribing = true;
+
+  // Show "transcribing..." indicator in transcript
+  showTranscribing();
+
+  try {
+
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'chunk.webm');
+    formData.append('model', 'whisper-1');
+    // Auto-detect language — best accuracy for Hindi+English mixed speech
+    // Do NOT force language — multilingual mode is most accurate for Hinglish
+    const lang = document.querySelector('.lang-btn.active')?.textContent?.trim() || 'Hindi + EN';
+    if (lang === 'English') formData.append('language', 'en');
+    if (lang === 'Hindi')   formData.append('language', 'hi');
+    // Hindi + EN = no language param = Whisper auto-detects (most accurate)
+    formData.append('prompt', 'Agrochemical B2B sales meeting between supplier Atomgrid and customer. Speakers discuss molecules: CTPR, Tembotrione, Bispyribac, Propaquizafop, Pretilachlor, Thiamethoxam, Pendimethalin, Quizalofop, Tolfenpyrad, Tebuconazole. Business terms: MT, KL, advance payment, 90 days credit, dispatch, PO, Kharif, Rabi, job work, formulation, technical grade, bulk, price per kg, requirement.');
+    formData.append('response_format', 'verbose_json');
+
+    const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${OPENAI_KEY}` },
+      body: formData
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('[Whisper] API error:', res.status, err);
+      removeTranscribing();
+      isTranscribing = false;
+      return;
+    }
+
+    const data = await res.json();
+    const text = data.text?.trim();
+    console.log('[Whisper] Transcribed:', text);
+
+    removeTranscribing();
+
+    if (text && text.length > 8 && !isNoiseTranscript(text)) {
+      appendTranscriptLine(text);
+    } else if (text) {
+      console.log('[Whisper] Skipping short/noise transcript:', text);
+    }
+
+  } catch (err) {
+    console.error('[Whisper] Error:', err);
+    removeTranscribing();
+    toast('⚠ Whisper error — check console');
+  }
+
+  isTranscribing = false;
+}
+
+// ── TRANSCRIPT RENDERING ─────────────────────────────────────
+function clearSampleTranscript() {
+  const scroll   = document.getElementById('transcript-scroll');
+  const samples  = scroll.querySelectorAll('.t-entry:not(#live-indicator)');
+  samples.forEach(el => el.remove());
+  lineCount = 0;
+}
+
+function appendTranscriptLine(text) {
+  if (!transcriptCleared) {
+    clearSampleTranscript();
+    transcriptCleared = true;
+    // Hide empty state
+    const empty = document.getElementById('transcript-empty-state');
+    if (empty) empty.style.display = 'none';
+  }
+
+  const scroll  = document.getElementById('transcript-scroll');
+  const liveInd = document.getElementById('live-indicator');
+  const spkCls  = spkClasses[speakerIdx % spkClasses.length];
+  const timeStr = fmtTime(secs);
+
+  const entry = document.createElement('div');
+  entry.className = 't-entry';
+  entry.innerHTML = `
+    <div>
+      <div class="spk-chip ${spkCls}">Speaker</div>
+      <div class="t-time">${timeStr}</div>
+    </div>
+    <div class="t-body">
+      <div class="t-text">${escHtml(text)}</div>
+    </div>`;
+
+  scroll.insertBefore(entry, liveInd);
+  fullTranscript += (fullTranscript ? ' ' : '') + text;
+  lineCount++;
+
+  document.getElementById('line-count').textContent = lineCount + ' line' + (lineCount !== 1 ? 's' : '');
+  scroll.scrollTop = scroll.scrollHeight;
+
+  // rotate speaker colour every 2 entries
+  if (lineCount % 2 === 0) speakerIdx++;
+
+  // store for Phase 4
+  window._fullTranscript = fullTranscript;
+  console.log('[Transcript] Line', lineCount, '| Total chars:', fullTranscript.length);
+  // Auto-generate MOM after every 3rd transcript line
+  if (lineCount > 0 && lineCount % 3 === 0) {
+    console.log('[Claude] Triggering MOM generation at line', lineCount);
+    generateMOM(false);
+  }
+}
+
+function showTranscribing() {
+  if (!transcriptCleared) { clearSampleTranscript(); transcriptCleared = true; }
+  const scroll  = document.getElementById('transcript-scroll');
+  const liveInd = document.getElementById('live-indicator');
+  let el = document.getElementById('transcribing-indicator');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'transcribing-indicator';
+    el.className = 't-entry t-live';
+    el.innerHTML = `
+      <div><div class="spk-chip spk-a" style="opacity:0.5;">…</div></div>
+      <div class="t-body">
+        <div class="t-text" style="color:var(--hint);font-style:italic;display:flex;align-items:center;gap:8px;">
+          <span style="width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;display:inline-block;flex-shrink:0;"></span>
+          Transcribing with Whisper…
+        </div>
+      </div>`;
+    scroll.insertBefore(el, liveInd);
+    scroll.scrollTop = scroll.scrollHeight;
+  }
+}
+
+function removeTranscribing() {
+  const el = document.getElementById('transcribing-indicator');
+  if (el) el.remove();
+}
+
+function escHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── CHUNK RECORDING CYCLE ────────────────────────────────────
+function startChunkCycle() {
+  // Create a second MediaRecorder just for Whisper chunks
+  const mimeType = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg']
+    .find(m => MediaRecorder.isTypeSupported(m)) || '';
+
+  function startNewChunk() {
+    if (!isRecording) return;
+    chunkBuffer = [];
+    chunkRecorder = new MediaRecorder(audioStream, mimeType ? { mimeType } : {});
+    chunkRecorder.ondataavailable = e => { if (e.data?.size > 0) chunkBuffer.push(e.data); };
+    chunkRecorder.onstop = () => {
+      if (chunkBuffer.length && isRecording) {
+        const blob = new Blob(chunkBuffer, { type: mimeType || 'audio/webm' });
+        if (blob.size > 50000) {
+          // Check if user was actually speaking during this chunk
+          const avgVol = getAverageVolume();
+          console.log('[Whisper] Chunk:', (blob.size/1024).toFixed(1), 'KB | Avg volume:', avgVol.toFixed(1), 'dB');
+          if (avgVol > 15) { // only transcribe if volume above threshold
+            transcribeChunk(blob);
+          } else {
+            console.log('[Whisper] Skipping low-volume chunk — likely silence/background');
+            showNoSpeechDetected();
+          }
+        } else {
+          console.log('[Whisper] Skipping small chunk:', (blob.size/1024).toFixed(1), 'KB');
+        }
+      }
+    };
+    chunkRecorder.start();
+
+    // Stop after CHUNK_SECONDS and immediately start next chunk
+    chunkTimer = setTimeout(() => {
+      if (chunkRecorder && chunkRecorder.state === 'recording') {
+        chunkRecorder.stop();
+        // Start next chunk after brief gap
+        setTimeout(startNewChunk, 300);
+      }
+    }, CHUNK_SECONDS * 1000);
+  }
+
+  startNewChunk();
+}
+
+function stopChunkCycle() {
+  clearTimeout(chunkTimer);
+  if (chunkRecorder && chunkRecorder.state === 'recording') {
+    // Transcribe whatever is left
+    chunkRecorder.ondataavailable = e => { if (e.data?.size > 0) chunkBuffer.push(e.data); };
+    chunkRecorder.onstop = () => {
+      if (chunkBuffer.length) {
+        const blob = new Blob(chunkBuffer, { type: 'audio/webm' });
+        if (blob.size > 50000) { // only if meaningful audio (>50KB)
+          console.log('[Whisper] Final chunk:', (blob.size/1024).toFixed(1), 'KB');
+          transcribeChunk(blob);
+        } else {
+          console.log('[Whisper] Final chunk too small — skipping');
+        }
+      }
+    };
+    chunkRecorder.stop();
+  }
+}
+
+// ── REQUEST MIC & START ──────────────────────────────────────
+async function requestMicAndStart() {
+  const btn    = document.getElementById('rec-btn');
+  const status = document.getElementById('rec-status-text');
+
+  status.textContent = 'Requesting microphone…';
+  btn.style.opacity  = '0.6';
+
+  try {
+    audioStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        channelCount:      1,
+        echoCancellation:  true,
+        noiseSuppression:  true,
+        autoGainControl:   true,
+        suppressLocalAudioPlayback: true  // stops mic picking up speaker output
+      }
+    });
+  } catch (err) {
+    btn.style.opacity = '1';
+    status.textContent = 'Mic access denied';
+    toast('❌ Microphone permission denied');
+    showMicHelp();
+    return;
+  }
+
+  // Web Audio for waveform visualiser + volume monitoring
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  analyser     = audioContext.createAnalyser();
+  analyser.fftSize = 256;
+  analyser.smoothingTimeConstant = 0.75;
+  const src = audioContext.createMediaStreamSource(audioStream);
+  src.connect(analyser);
+
+  // Volume monitor — track if user is actually speaking
+  const volAnalyser = audioContext.createAnalyser();
+  volAnalyser.fftSize = 512;
+  src.connect(volAnalyser);
+  window._volAnalyser = volAnalyser;
+
+  // Full recording MediaRecorder (for downloadable audio)
+  const mimeType = ['audio/webm;codecs=opus','audio/webm','audio/ogg']
+    .find(m => MediaRecorder.isTypeSupported(m)) || '';
+  mediaRecorder = new MediaRecorder(audioStream, mimeType ? { mimeType } : {});
+  const allChunks = [];
+  mediaRecorder.ondataavailable = e => { if (e.data?.size > 0) allChunks.push(e.data); };
+  mediaRecorder.onstop = () => {
+    const blob = new Blob(allChunks, { type: mimeType || 'audio/webm' });
+    const url  = URL.createObjectURL(blob);
+    window._recordedAudioBlob = blob;
+    window._recordedAudioUrl  = url;
+    showAudioReady(url, (blob.size/1024/1024).toFixed(2));
+  };
+
+  isRecording = true;
+  isMicReady  = true;
+  mediaRecorder.start(500);
+
+  // Start 15-second Whisper chunk cycle
+  startChunkCycle();
+
+  // Update UI
+  btn.style.opacity = '1';
+  btn.className = 'rec-btn recording';
+  document.getElementById('rec-ring').classList.add('pulsing');
+  document.getElementById('live-dot').style.display = '';
+  document.getElementById('live-indicator').style.display = '';
+  document.getElementById('rec-icon').innerHTML = `<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>`;
+  document.getElementById('live-badge').style.display = '';
+  document.getElementById('transcript-live-badge').style.display = '';
+
+  startTimer();
+  drawWave();
+
+  const langLabel = document.querySelector('.lang-btn.active')?.textContent?.trim() || 'Hindi + EN';
+  toast('🎙 Recording — Whisper transcribing every ' + CHUNK_SECONDS + 's in ' + langLabel);
+  console.log('[Whisper] Recording started — chunk every', CHUNK_SECONDS, 'seconds');
+  startMomTimer(); // Phase 4: start MOM auto-generation
+}
+
+// ── PAUSE / RESUME ───────────────────────────────────────────
+function toggleRec() {
+  if (!isMicReady) { requestMicAndStart(); return; }
+
+  const btn    = document.getElementById('rec-btn');
+  const ring   = document.getElementById('rec-ring');
+  const status = document.getElementById('rec-status-text');
+  const live   = document.getElementById('live-indicator');
+  const icon   = document.getElementById('rec-icon');
+
+  if (isRecording) {
+    isRecording = false;
+    pauseTimer();
+    flattenWave();
+    clearTimeout(chunkTimer);
+    stopMomTimer();
+    if (chunkRecorder?.state === 'recording') chunkRecorder.stop();
+    if (mediaRecorder?.state === 'recording') mediaRecorder.pause();
+    btn.className = 'rec-btn paused';
+    ring.classList.remove('pulsing');
+    document.getElementById('live-dot').style.display = 'none';
+    status.textContent = 'Paused — tap to resume';
+    if (live) live.style.display = 'none';
+    removeTranscribing();
+    icon.innerHTML = `<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>`;
+    toast('Recording paused');
+  } else {
+    isRecording = true;
+    startTimer();
+    if (mediaRecorder?.state === 'paused') mediaRecorder.resume();
+    startChunkCycle();
+    startMomTimer(); // resume MOM generation
+    btn.className = 'rec-btn recording';
+    ring.classList.add('pulsing');
+    document.getElementById('live-dot').style.display = '';
+    status.textContent = 'Recording in progress';
+    if (live) live.style.display = '';
+    icon.innerHTML = `<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>`;
+    drawWave();
+    toast('Recording resumed');
+  }
+}
+
+// ── STOP & FINALISE ──────────────────────────────────────────
+function stopRec() {
+  if (!isMicReady) { toast('Nothing to stop — recording not started'); return; }
+
+  isRecording = false;
+  pauseTimer();
+  flattenWave();
+
+  stopChunkCycle();
+  if (mediaRecorder?.state !== 'inactive') mediaRecorder.stop();
+  if (audioStream) audioStream.getTracks().forEach(t => t.stop());
+
+  // Update UI
+  const btn = document.getElementById('rec-btn');
+  btn.className = 'rec-btn idle';
+  btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
+  document.getElementById('rec-ring').classList.remove('pulsing');
+  document.getElementById('live-dot').style.display = 'none';
+  document.getElementById('rec-status-text').textContent = 'Processing final chunk…';
+  const liveInd = document.getElementById('live-indicator');
+  if (liveInd) liveInd.style.display = 'none';
+
+  document.getElementById('live-badge').className = 'badge badge-done';
+  document.getElementById('live-badge').textContent = '✓ Done';
+  document.getElementById('transcript-live-badge').className = 'badge badge-done';
+  document.getElementById('transcript-live-badge').textContent = 'Final';
+
+  // Wait for last Whisper call to finish then update status
+  const waitForFinal = setInterval(() => {
+    if (!isTranscribing) {
+      clearInterval(waitForFinal);
+      document.getElementById('rec-status-text').textContent =
+        'Complete — ' + lineCount + ' lines transcribed';
+      document.getElementById('ai-spinner').style.display = 'none';
+      document.getElementById('ai-status-text').textContent =
+        '✓ Transcript ready — ' + lineCount + ' lines · Ready for Phase 4 (AI MOM)';
+      document.getElementById('ai-status-text').style.color = 'var(--green)';
+      const _durFinal = document.getElementById('mom-duration'); if (_durFinal) _durFinal.textContent = fmtTime(secs);
+      window._fullTranscript = fullTranscript;
+      console.log('[Phase 3 ✅] Full transcript:', fullTranscript);
+      stopMomTimer();
+      generateMOM(true); // Final MOM generation
+      // Phase 5: save to Firestore after MOM is generated
+      setTimeout(() => saveMeetingToFirestore(), 3000);
+      toast('✅ Done — ' + lineCount + ' lines in ' + fmtTime(secs));
+    }
+  }, 500);
+}
+
+// ── HELPERS ──────────────────────────────────────────────────
+function showAudioReady(url, sizeMB) {
+  const old = document.getElementById('audio-ready-bar'); if (old) old.remove();
+  const bar = document.createElement('div');
+  bar.id = 'audio-ready-bar';
+  bar.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--green-bdr);border-radius:var(--r-lg);padding:12px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:100;font-size:12px;white-space:nowrap;';
+  bar.innerHTML = `<span style="color:var(--green);font-weight:700;">✅ Audio saved</span>
+    <span style="color:var(--muted);">${sizeMB} MB</span>
+    <a href="${url}" download="meeting-${Date.now()}.webm" style="padding:5px 12px;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-bdr);border-radius:var(--r-sm);font-weight:600;text-decoration:none;">⬇ Download</a>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--hint);cursor:pointer;font-size:18px;line-height:1;">×</button>`;
+  document.body.appendChild(bar);
+}
+
+function showMicHelp() {
+  const old = document.getElementById('mic-help'); if (old) old.remove();
+  const div = document.createElement('div');
+  div.id = 'mic-help';
+  div.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--warn-bdr);border-radius:var(--r-lg);padding:14px 18px;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:100;font-size:12px;line-height:1.6;';
+  div.innerHTML = `<div style="font-weight:700;color:var(--warn);margin-bottom:6px;">🎙 Microphone access needed</div>
+    <div style="color:var(--muted);">Open via <strong>localhost</strong> (not file://). Click lock icon → Microphone → Allow.</div>
+    <button onclick="this.parentElement.remove()" style="margin-top:10px;padding:5px 12px;background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-bdr);border-radius:var(--r-sm);cursor:pointer;font-weight:600;">Got it</button>`;
+  document.body.appendChild(div);
+}
+
+// ── PAGE LOAD: initial idle state ────────────────────────────
+// ── EXPOSE FUNCTIONS TO WINDOW (needed for type="module") ──────
+window.toggleRec      = toggleRec;
+window.stopRec        = stopRec;
+window.setLang        = setLang;
+window.onTypeChange   = onTypeChange;
+window.addAttendee    = addAttendee;
+window.flagAction     = flagAction;
+window.shareWhatsApp  = shareWhatsApp;
+window.searchCompany  = searchCompany;
+window.selectCompany  = selectCompany;
+window.updateMeetingTitle = updateMeetingTitle;
+window.toast          = toast;
+
+(function initUI() {
+  const btn = document.getElementById('rec-btn');
+  btn.className = 'rec-btn idle';
+  btn.innerHTML = `<svg id="rec-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="9" y="2" width="6" height="12" rx="3"/>
+    <path d="M19 10a7 7 0 0 1-14 0"/>
+    <line x1="12" y1="17" x2="12" y2="22"/>
+    <line x1="8" y1="22" x2="16" y2="22"/>
+  </svg>`;
+  document.getElementById('rec-ring').classList.remove('pulsing');
+  document.getElementById('live-dot').style.display = 'none';
+  document.getElementById('live-badge').style.display = 'none';
+  document.getElementById('transcript-live-badge').style.display = 'none';
+  document.getElementById('rec-status-text').textContent = 'Tap to start recording';
+  document.getElementById('rec-timer').textContent = '00:00:00';
+  const liveInd = document.getElementById('live-indicator');
+  if (liveInd) liveInd.style.display = 'none';
+})();
+
+
+
+// ══════════════════════════════════════════════════════════════
+// PHASE 4 — CLAUDE API: AUTO MOM GENERATION
+// Every 60s (and on stop), sends full transcript to Claude
+// Claude returns structured MOM in exact Atomgrid format
+// MOM panel updates live as meeting progresses
+// ══════════════════════════════════════════════════════════════
+
+const CLAUDE_KEY = CONFIG.CLAUDE_KEY; // loaded from config.js
+const MOM_INTERVAL_SECS = 60; // regenerate MOM every 60s
+let momTimer = null;
+let lastTranscriptSent = '';
+let isMomGenerating = false;
+
+// ── CLAUDE MOM PROMPT ────────────────────────────────────────
+function buildMomPrompt() {
+  const company   = selectedCompany || document.getElementById('company-input')?.value || 'Unknown Company';
+  const typeEl    = document.getElementById('meeting-type');
+  const type      = typeEl ? typeEl.options[typeEl.selectedIndex].text : 'Supply meeting';
+  const date      = window._todayDate || new Date().toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
+  const duration  = fmtTime(secs);
+  const attendees = Array.from(document.querySelectorAll('#att-list .att-name')).map(e => e.textContent).join(', ') || 'Not specified';
+  const reporter  = 'Deepak';
+
+  return `You are an expert Atomgrid agrochemical sales meeting assistant. 
+Atomgrid is an asset-light agrochemical B2B company dealing in technicals, formulations, job work, and intermediates.
+
+Convert this meeting transcript into a structured MOM in EXACTLY this JSON format. 
+Output ONLY valid JSON, no markdown, no explanation.
+
+Meeting context:
+- Company: ${company}
+- Type: ${type}
+- Date: ${date}
+- Duration: ${duration}
+- Attendees: ${attendees}
+- Reported by: ${reporter}
+
+TRANSCRIPT:
+${fullTranscript}
+
+Return this exact JSON structure:
+{
+  "company": "${company}",
+  "type": "${type}",
+  "date": "${date}",
+  "duration": "${duration}",
+  "attendee": "customer contact name if mentioned, else Unknown",
+  "ag_attendee": "${attendees}",
+  "reported_by": "${reporter}",
+  "business_model": "inferred from discussion",
+  "states": "states/regions mentioned",
+  "overview": "2-3 sentence summary of the meeting in English",
+  "current_req": [
+    {"mol": "molecule/product name", "qty": "quantity and timing mentioned"}
+  ],
+  "kharif_plan": [
+    {"mol": "molecule/product name", "qty": "quantity and notes"}
+  ],
+  "other_updates": [
+    "payment terms mentioned",
+    "key insight 1",
+    "key insight 2"
+  ],
+  "action_items": [
+    {"owner": "person name", "text": "specific action to be taken"}
+  ],
+  "decisions": [
+    "decision taken in the meeting"
+  ],
+  "next_steps": [
+    "follow up item"
+  ],
+  "po_note": "any PO or order mentioned, else empty string"
+}
+
+Rules:
+- Extract only what was actually discussed — do not invent
+- Molecule names: keep technical names (CTPR, Tembotrione, Bispyribac, etc.)
+- Quantities: include MT, KL, kg as mentioned
+- All text output in English (translate Hindi content to English)
+- If a field has no data, use empty array [] or empty string ""
+- po_note should be bold italic style text like: "CTPR 5 MT advance PO to be confirmed."`;
+}
+
+// ── CALL CLAUDE API ──────────────────────────────────────────
+async function generateMOM(isFinal = false) {
+  if (!fullTranscript || fullTranscript.trim().length < 30) return;
+  if (isMomGenerating) return;
+  if (fullTranscript === lastTranscriptSent && !isFinal) return;
+
+  isMomGenerating = true;
+  lastTranscriptSent = fullTranscript;
+  console.log('[Claude] Generating MOM, transcript length:', fullTranscript.length, 'chars');
+
+  // Show generating state
+  const statusEl = document.getElementById('ai-status-text');
+  const spinnerEl = document.getElementById('ai-spinner');
+  statusEl.textContent = isFinal ? 'Finalising MOM with Claude…' : 'Claude updating MOM…';
+  spinnerEl.style.display = '';
+  spinnerEl.style.borderTopColor = 'var(--accent)';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': CLAUDE_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: buildMomPrompt() }]
+      })
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('[Claude] API error:', res.status, errText);
+      // Show specific error message to help debug
+      let msg = '⚠ Claude error ' + res.status;
+      try {
+        const errJson = JSON.parse(errText);
+        msg += ': ' + (errJson.error?.message || errText.slice(0,100));
+      } catch(e) { msg += ': ' + errText.slice(0,100); }
+      statusEl.textContent = msg;
+      statusEl.style.color = 'var(--danger)';
+      isMomGenerating = false;
+      return;
+    }
+
+    const data = await res.json();
+    const raw  = data.content?.[0]?.text?.trim();
+    console.log('[Claude] Raw response:', raw?.slice(0, 200));
+
+    // Parse JSON — strip markdown fences, find JSON object
+    let clean = raw || '';
+    clean = clean.replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+    // Find JSON object if wrapped in text
+    const jsonStart = clean.indexOf('{');
+    const jsonEnd   = clean.lastIndexOf('}');
+    if (jsonStart !== -1 && jsonEnd !== -1) clean = clean.slice(jsonStart, jsonEnd + 1);
+    console.log('[Claude] Parsing JSON, length:', clean.length, 'preview:', clean.slice(0,100));
+    const mom = JSON.parse(clean);
+    console.log('[Claude] MOM parsed ✅', Object.keys(mom));
+
+    renderMOM(mom);
+    statusEl.textContent = isFinal
+      ? '✓ MOM finalised by Claude — ready to share'
+      : '✓ Claude updated MOM — ' + new Date().toLocaleTimeString();
+    statusEl.style.color = 'var(--green)';
+    spinnerEl.style.display = 'none';
+
+    // Store for WhatsApp share
+    window._currentMOM = mom;
+
+  } catch (err) {
+    console.error('[Claude] Error:', err);
+    statusEl.textContent = '⚠ MOM generation failed — ' + err.message;
+    statusEl.style.color = 'var(--danger)';
+    spinnerEl.style.display = 'none';
+  }
+
+  isMomGenerating = false;
+}
+
+// ── RENDER MOM INTO RIGHT PANEL ──────────────────────────────
+function renderMOM(mom) {
+  const body = document.getElementById('mom-body');
+  // Hide empty state
+  const emptyState = document.getElementById('mom-empty-state');
+  if (emptyState) emptyState.style.display = 'none';
+
+  // Helper to create section
+  const sec = (title, content) => `
+    <div class="mom-sec">
+      <div class="mom-sec-title">${title}</div>
+      ${content}
+    </div>`;
+
+  const row  = (text, dot='dot-blue') =>
+    `<div class="mom-row"><span class="mom-dot ${dot}"></span><span>${escHtml(text)}</span></div>`;
+
+  const actionCard = (owner, text) => `
+    <div class="action-card" style="margin-bottom:5px;">
+      <div class="ac-owner">${escHtml(owner)}</div>
+      ${escHtml(text)}
+    </div>`;
+
+  const decisionCard = (text) =>
+    `<div class="decision-card" style="margin-bottom:5px;">${escHtml(text)}</div>`;
+
+  const reqCard = (label, text) => `
+    <div class="req-card" style="margin-bottom:5px;">
+      <div style="font-size:10px;font-weight:700;color:var(--accent);margin-bottom:3px;">${escHtml(label)}</div>
+      ${escHtml(text)}
+    </div>`;
+
+  let html = '';
+
+  // Meeting info
+  html += sec('Meeting info', `
+    <div class="mom-info-grid">
+      <div class="mom-info-item"><div class="mom-info-label">Type</div><div class="mom-info-val">${escHtml(mom.type||'—')}</div></div>
+      <div class="mom-info-item"><div class="mom-info-label">Date</div><div class="mom-info-val">${escHtml(mom.date||window._todayDate||'—')}</div></div>
+      <div class="mom-info-item"><div class="mom-info-label">Company</div><div class="mom-info-val">${escHtml(mom.company||'—')}</div></div>
+      <div class="mom-info-item"><div class="mom-info-label">Duration</div><div class="mom-info-val" id="mom-duration">${escHtml(mom.duration||'—')}</div></div>
+    </div>`);
+
+  // Attendees
+  const attList = [mom.attendee, mom.ag_attendee].filter(Boolean).join(', ');
+  html += sec('Attendees', `
+    <div class="att-chips">
+      ${attList.split(',').map(a => a.trim()).filter(Boolean).map(a =>
+        `<span class="att-pill">${escHtml(a)}</span>`).join('')}
+    </div>`);
+
+  // Overview
+  if (mom.overview) {
+    html += sec('Overview', `<div class="mom-row" style="background:transparent;padding:0;">
+      <span style="font-size:12px;color:var(--muted);line-height:1.6;">${escHtml(mom.overview)}</span></div>`);
+  }
+
+  // Current requirements
+  if (mom.current_req?.length) {
+    html += sec('Current requirements', mom.current_req.map(r =>
+      reqCard(r.mol, r.qty || '—')).join(''));
+  }
+
+  // Kharif/Rabi plan
+  if (mom.kharif_plan?.length) {
+    html += sec('Kharif / Rabi plan', mom.kharif_plan.map(r =>
+      row(r.mol + (r.qty ? ' — ' + r.qty : ''))).join(''));
+  }
+
+  // Other updates / key insights
+  if (mom.other_updates?.length) {
+    html += sec('Key updates', mom.other_updates.map(u => row(u)).join(''));
+  }
+
+  // Action items
+  if (mom.action_items?.length) {
+    html += sec('Action items', mom.action_items.map(a =>
+      actionCard(a.owner || 'Team', a.text)).join(''));
+  }
+
+  // Decisions
+  if (mom.decisions?.length) {
+    html += sec('Decisions taken', mom.decisions.map(d => decisionCard(d)).join(''));
+  }
+
+  // Next steps
+  if (mom.next_steps?.length) {
+    html += sec('Next steps', mom.next_steps.map(n => row(n, 'dot-gray')).join(''));
+  }
+
+  // PO note
+  if (mom.po_note) {
+    html += `<div style="padding:8px 10px;background:var(--green-bg);border:1px solid var(--green-bdr);border-radius:var(--r-sm);font-size:12px;font-weight:700;font-style:italic;color:var(--green);">★ ${escHtml(mom.po_note)}</div>`;
+  }
+
+  body.innerHTML = html;
+}
+
+// ── START / STOP MOM TIMER ───────────────────────────────────
+function startMomTimer() {
+  clearInterval(momTimer);
+  momTimer = setInterval(() => {
+    if (isRecording && fullTranscript && fullTranscript !== lastTranscriptSent) {
+      generateMOM(false);
+    }
+  }, MOM_INTERVAL_SECS * 1000);
+}
+
+function stopMomTimer() {
+  clearInterval(momTimer);
+}
+
+
+
+// ── VOICE ACTIVITY DETECTION ─────────────────────────────────
+function getAverageVolume() {
+  if (!window._volAnalyser) return 50; // default to send if no analyser
+  const data = new Uint8Array(window._volAnalyser.frequencyBinCount);
+  window._volAnalyser.getByteFrequencyData(data);
+  // Calculate RMS of frequency data
+  const sum = data.reduce((a, b) => a + b, 0);
+  return sum / data.length;
+}
+
+let noSpeechTimeout = null;
+function showNoSpeechDetected() {
+  const status = document.getElementById('rec-status-text');
+  const prev = status.textContent;
+  status.textContent = '🔇 Low volume — speak closer to mic';
+  status.style.color = 'var(--warn)';
+  clearTimeout(noSpeechTimeout);
+  noSpeechTimeout = setTimeout(() => {
+    if (isRecording) {
+      status.textContent = 'Recording in progress';
+      status.style.color = '';
+    }
+  }, 3000);
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// PHASE 5 — FIRESTORE STORAGE
+// Saves every completed meeting to Firebase Firestore
+// Dashboard reads from same database
+// ══════════════════════════════════════════════════════════════
+
+// ── FIREBASE INIT ─────────────────────────────────────────────
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, addDoc, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = CONFIG.FIREBASE; // loaded from config.js
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db          = getFirestore(firebaseApp);
+
+// ── SAVE MEETING TO FIRESTORE ─────────────────────────────────
+async function saveMeetingToFirestore() {
+  const mom = window._currentMOM;
+  if (!mom && !fullTranscript) return;
+
+  const company  = selectedCompany || document.getElementById('company-input').value || 'Unknown';
+  const type     = document.getElementById('meeting-type').options[
+                     document.getElementById('meeting-type').selectedIndex].text;
+  const reporter = 'Deepak'; // Phase 6 will pull from login
+  const attendees = Array.from(document.querySelectorAll('#att-list .att-name'))
+                      .map(e => e.textContent);
+
+  const meetingData = {
+    company,
+    type,
+    reporter,
+    attendees,
+    duration:    fmtTime(secs),
+    transcript:  fullTranscript || '',
+    createdAt:   serverTimestamp(),
+    date:        new Date().toISOString().slice(0,10),
+
+    // Claude-generated MOM fields
+    overview:      mom?.overview      || '',
+    businessModel: mom?.business_model|| '',
+    states:        mom?.states        || '',
+    current_req:   mom?.current_req   || [],
+    kharif_plan:   mom?.kharif_plan   || [],
+    other_updates: mom?.other_updates || [],
+    action_items:  mom?.action_items  || [],
+    decisions:     mom?.decisions     || [],
+    next_steps:    mom?.next_steps    || [],
+    po_note:       mom?.po_note       || '',
+    molecules:     extractMolecules(fullTranscript || ''),
+  };
+
+  try {
+    const docRef = await addDoc(collection(db, 'meetings'), meetingData);
+    console.log('[Firebase] Meeting saved:', docRef.id);
+    showSavedBanner(company, docRef.id);
+    return docRef.id;
+  } catch (err) {
+    console.error('[Firebase] Save error:', err);
+    toast('⚠ Could not save to database — ' + err.message);
+  }
+}
+
+// ── EXTRACT MOLECULES FROM TRANSCRIPT ────────────────────────
+const MOLECULE_LIST = ['CTPR','Tembotrione','Bispyribac','Propaquizafop','Pretilachlor',
+  'Thiamethoxam','Pendimethalin','Quizalofop','Tolfenpyrad','Tebuconazole','Glyphosate',
+  'Glufosinate','Paraquat','Tricyclazole','Hexaconazole','Pymetrozine','Dinotefuran',
+  'Azoxystrobin','Propiconazole','Imazethapyr','Pyroxasulfone','Clodinafop','Pinoxaden',
+  'Metribuzin','Atrazine','Topramezone','Fipronil','Chlorpyrifos','Emamectin','Cartap'];
+
+function extractMolecules(text) {
+  return MOLECULE_LIST.filter(m =>
+    text.toLowerCase().includes(m.toLowerCase())
+  );
+}
+
+// ── SAVED BANNER ──────────────────────────────────────────────
+function showSavedBanner(company, id) {
+  const old = document.getElementById('saved-banner'); if (old) old.remove();
+  const bar = document.createElement('div');
+  bar.id = 'saved-banner';
+  bar.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--green-bdr);border-radius:var(--r-lg);padding:12px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:100;font-size:12px;white-space:nowrap;';
+  bar.innerHTML = `<span style="color:var(--green);font-weight:700;">✅ Saved to database</span>
+    <span style="color:var(--muted);">${company}</span>
+    <a href="dashboard.html" style="padding:5px 12px;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-bdr);border-radius:var(--r-sm);font-weight:600;text-decoration:none;">View in Dashboard →</a>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--hint);cursor:pointer;font-size:18px;line-height:1;">×</button>`;
+  document.body.appendChild(bar);
+  setTimeout(() => { if (bar.parentElement) bar.remove(); }, 8000);
+}
+
+
+// ── COMPANY DATABASE (from actual MOM data) ────────────────
+const COMPANIES = [
+  { name:'Agrico Organics', rev:'~500Cr', model:'Tech Mfg + B2B' },
+  { name:'Agrow Allied Ventures', rev:'1000Cr', model:'Export + B2B' },
+  { name:'Ichiban Cropscience', rev:'1000Cr', model:'Brand 90% + B2B' },
+  { name:'Dharmaj Crop Guard', rev:'Est.', model:'Mfg + Export' },
+  { name:'Coromandel International', rev:'Large', model:'B2B + Export' },
+  { name:'Bharat Rasayan', rev:'2700Cr', model:'Export + B2B + Brand' },
+  { name:'Crystal Crop Protection', rev:'2800Cr', model:'Brand + B2B' },
+  { name:'GSP Crop Science', rev:'Large', model:'Mfg + Export' },
+  { name:'Heranba Industries', rev:'1400Cr', model:'Mfg + Export' },
+  { name:'Indogulf Cropscience', rev:'625Cr', model:'Brand + B2B' },
+  { name:'NACL Industries', rev:'Est.', model:'Mfg' },
+  { name:'JU Agriscience', rev:'Est.', model:'Mfg + B2B' },
+  { name:'Insecticides India Ltd', rev:'Est.', model:'Brand + Mfg' },
+  { name:'Gujarat Crop Care', rev:'500Cr', model:'B2C + B2B' },
+  { name:'Oasis Insecticides', rev:'Est.', model:'Brand + B2B' },
+  { name:'Parijat Industries', rev:'Est.', model:'Mfg + Export' },
+  { name:'Nova Agri', rev:'Est.', model:'Mfg + B2B' },
+  { name:'Niyam Industries', rev:'Est.', model:'Mfg + JW' },
+  { name:'Ratnakar India', rev:'Est.', model:'B2B + Brand' },
+  { name:'Krishi Rasayan', rev:'Est.', model:'Mfg + B2B' },
+  { name:'Advance Agrolife', rev:'~1000Cr', model:'Brand + B2B + Export' },
+  { name:'Bios Crop Care', rev:'350Cr', model:'B2C + B2B' },
+  { name:'Frontline Agritech', rev:'150Cr', model:'B2C + B2B' },
+  { name:'Meghmani Organics', rev:'Est.', model:'Mfg + B2B' },
+  { name:'Crop Care', rev:'Est.', model:'Mfg + B2B' },
+  { name:'ABCI Agrichem', rev:'120Cr', model:'B2C + Job Work' },
+  { name:'Acufine Life Sciences', rev:'80Cr', model:'Mfg + B2B' },
+  { name:'Active Chemicals / Cyclopharma', rev:'Est.', model:'JW + Mfg' },
+  { name:'Adhunik Crop Care', rev:'100Cr', model:'Brand' },
+  { name:'Aegis Agro Chemicals', rev:'200Cr', model:'Brand + B2B' },
+  { name:'Best Agrolife', rev:'Large', model:'Brand + Mfg' },
+  { name:'Aarya Crop Science', rev:'<15Cr', model:'Brand' },
+  { name:'Aashray Chemo Pharma', rev:'Est.', model:'JW + Specialty' },
+];
+
+let selectedCompany = null;
+
+function searchCompany(q) {
+  const dd = document.getElementById('company-dropdown');
+  const val = q.trim().toLowerCase();
+  if (!val) {
+    dd.classList.remove('open');
+    return;
+  }
+  const matches = COMPANIES.filter(c => c.name.toLowerCase().includes(val)).slice(0, 8);
+  if (!matches.length) { dd.classList.remove('open'); return; }
+
+  dd.innerHTML = matches.map(c => {
+    const init = c.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    return `<div class="company-option" onclick="selectCompany('${c.name.replace(/'/g,'\\\'').replace(/\//g,'\\/')}','${c.rev}')">
+      <div class="co-initials">${init}</div>
+      <div>
+        <div class="co-name">${c.name}</div>
+        <div style="font-size:10px;color:var(--hint);">${c.model}</div>
+      </div>
+      <div class="co-rev">${c.rev}</div>
+    </div>`;
+  }).join('');
+  dd.classList.add('open');
+}
+
+function selectCompany(name, rev) {
+  selectedCompany = name;
+  document.getElementById('company-input').value = name;
+  document.getElementById('company-dropdown').classList.remove('open');
+  document.getElementById('company-display').textContent = '— ' + name;
+  const _mc = document.getElementById('mom-company'); if (_mc) _mc.textContent = name;
+  updateMeetingTitle();
+  toast('Company set: ' + name);
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.company-search-wrap')) {
+    document.getElementById('company-dropdown').classList.remove('open');
+  }
+});
+
+// ── MEETING TYPE ────────────────────────────────────────────
+const TYPE_LABELS = { supply:'Supply meeting', office:'Office meeting', client:'Client meeting', domestic:'Domestic meeting', review:'Review meeting', ops:'Operations meeting', agm:'AGM / Board', hr:'HR meeting' };
+
+function onTypeChange(sel) {
+  const label = TYPE_LABELS[sel.value] || sel.options[sel.selectedIndex].text;
+  const _tb = document.getElementById('type-badge'); if (_tb) _tb.textContent = label.split(' ')[0];
+  const _mt = document.getElementById('mom-type'); if (_mt) _mt.textContent = label;
+  updateMeetingTitle();
+}
+
+function updateMeetingTitle() {
+  const type = document.getElementById('meeting-type').value;
+  const label = TYPE_LABELS[type] || 'Meeting';
+  const title = document.getElementById('meeting-title').value || label;
+  const company = selectedCompany ? ' — ' + selectedCompany : '';
+  document.getElementById('meeting-title-display').textContent = title + company;
+}
+
+document.getElementById('meeting-title').addEventListener('input', updateMeetingTitle);
+
+// ── LANGUAGE ────────────────────────────────────────────────
+function setLang(btn) {
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const map = { 'English':'EN', 'Hindi + EN':'HI+EN', 'Hindi':'HI' };
+  document.querySelectorAll('.badge-lang').forEach(b => b.textContent = map[btn.textContent] || btn.textContent);
+}
+
+// ── DATE ────────────────────────────────────────────────────
+const NOW = new Date();
+const dateStr = NOW.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+document.getElementById('today-date').textContent = dateStr;
+window._todayDate = NOW.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }); // stored, used by renderMOM
+
+// ── old fake waveform/timer/recorder replaced by Phase 2 mic engine above ──
+
+// ── ATTENDEES ───────────────────────────────────────────────
+function addAttendee() {
+  const inp = document.getElementById('att-input');
+  const name = inp.value.trim();
+  if (!name) return;
+  const init = name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const c = attColors[attColorIdx % attColors.length];
+  attColorIdx++;
+  const div = document.createElement('div');
+  div.className = 'att-row';
+  div.innerHTML = `<div class="att-av" style="background:${c.bg};color:${c.color};">${init}</div>
+    <span class="att-name">${name}</span>
+    <button class="att-remove" onclick="this.parentElement.remove()" title="Remove">×</button>`;
+  document.getElementById('att-list').appendChild(div);
+  inp.value = '';
+  // also add to MOM attendees
+  const pill = document.createElement('span');
+  pill.className = 'att-pill';
+  pill.textContent = name;
+  document.getElementById('mom-attendees').appendChild(pill);
+}
+
+// ── FLAG ACTION ITEM ────────────────────────────────────────
+function flagAction() {
+  const text = prompt('Describe the action item:');
+  if (!text) return;
+  const owner = prompt('Assign to (name):') || 'Team';
+  const card = document.createElement('div');
+  card.className = 'action-card';
+  card.style.marginTop = '5px';
+  card.innerHTML = `<div class="ac-owner">${owner}</div>${text}`;
+  document.querySelector('.mom-sec:nth-child(5)').appendChild(card);
+  toast('Action item added to MOM');
+}
+
+// ── WHATSAPP SHARE ──────────────────────────────────────────
+function shareWhatsApp() {
+  // If Claude generated a MOM, use that — otherwise use static template
+  if (window._currentMOM) {
+    shareWhatsAppFromMOM(window._currentMOM);
+    return;
+  }
+  const company = selectedCompany || 'Customer';
+  const type = document.getElementById('meeting-type').options[document.getElementById('meeting-type').selectedIndex].text;
+  const dur = fmtTime(secs);
+
+  const text = `*MINUTES OF MEETING — Atomgrid*
+━━━━━━━━━━━━━━━━━━━━
+*Company:* ${company}
+*Type:* ${type}
+*Date:* ${dateStr}
+*Duration:* ${dur}
+*Reported by:* Deepak
+
+*DISCUSSION POINTS*
+• CTPR 18.5% SC — 5 MT plan on advance basis
+• Tembotrione bulk 2 KL — sample approved, June delivery
+• Bispyribac Sodium 3 KL planned for March
+• Pendimethalin lot ready at warehouse — dispatch confirmation awaited
+• Q3 supplier terms discussion initiated
+
+*PRODUCT REQUIREMENTS*
+Immediate (June): CTPR 5 MT · Tembo bulk 2 KL
+Upcoming (March): Bispyribac Sodium 3 KL
+
+*ACTION ITEMS*
+→ Deepak: Get logistics confirmation for Pendimethalin by tomorrow
+→ Deepak: Share CTPR advance price + dispatch timeline today
+→ Priya: Update dispatch tracker; follow up warehouse today
+
+*DECISIONS*
+✓ First 2–3 transactions on advance; 90-day credit thereafter
+✓ Tembo bulk sample to be dispatched by tomorrow
+
+*NEXT STEPS*
+• Q3 supplier terms to be closed in follow-up call
+• Bispyribac Sodium price to be shared before March
+
+_Sent from Atomgrid MOM Recorder_`;
+
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+  toast('Opening WhatsApp with MOM…');
+}
+
+
+// ── WHATSAPP SHARE FROM CLAUDE MOM ──────────────────────────
+function shareWhatsAppFromMOM(mom) {
+  const d = new Date();
+  const ds = d.toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
+
+  let txt = `*MINUTES OF MEETING*\n_Atomgrid · Agro Business_\n━━━━━━━━━━━━━━━━━━━━\n`;
+  txt += `*Company:* ${mom.company||'—'}\n`;
+  txt += `*Attendee:* ${mom.attendee||'—'}\n`;
+  txt += `*AG Attendee:* ${mom.ag_attendee||'—'}\n`;
+  txt += `*Date:* ${mom.date||ds}\n`;
+  txt += `*Duration:* ${mom.duration||fmtTime(secs)}\n`;
+  txt += `*Reported by:* ${mom.reported_by||'Deepak'}\n\n`;
+  if (mom.overview) txt += `${mom.overview}\n`;
+
+  if (mom.current_req?.length) {
+    txt += `\n*-Current Requirement:*\n`;
+    mom.current_req.forEach(r => txt += `- ${r.mol}${r.qty?' ('+r.qty+')':''}\n`);
+  }
+  if (mom.kharif_plan?.length) {
+    txt += `\n*-Kharif / Rabi Planning:*\n`;
+    mom.kharif_plan.forEach(r => txt += `- ${r.mol}${r.qty?' — '+r.qty:''}\n`);
+  }
+  if (mom.other_updates?.length) {
+    txt += `\n*-Other Updates:*\n`;
+    mom.other_updates.forEach(u => txt += `- ${u}\n`);
+  }
+  if (mom.action_items?.length) {
+    txt += `\n*-Action Items:*\n`;
+    mom.action_items.forEach(a => txt += `→ ${a.owner}: ${a.text}\n`);
+  }
+  if (mom.decisions?.length) {
+    txt += `\n*-Decisions:*\n`;
+    mom.decisions.forEach(d => txt += `✓ ${d}\n`);
+  }
+  if (mom.next_steps?.length) {
+    txt += `\n*-Next Steps:*\n`;
+    mom.next_steps.forEach(n => txt += `• ${n}\n`);
+  }
+  if (mom.po_note) txt += `\n_${mom.po_note}_\n`;
+  txt += `\n_Sent from Atomgrid MOM Recorder_`;
+
+  window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank');
+  toast('Opening WhatsApp with AI-generated MOM…');
+}
+
+// ── TOAST ───────────────────────────────────────────────────
+function toast(msg) {
+  const wrap = document.getElementById('toast-wrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transition = 'opacity 0.3s';
+    setTimeout(() => t.remove(), 300);
+  }, 2600);
+}
+</script>
+</body>
+</html>

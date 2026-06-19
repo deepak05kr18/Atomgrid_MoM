@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOM Dashboard — Atomgrid</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F5F4F0;--surface:#FFFFFF;--border:#E4E2DB;--border-md:#C9C7BF;
+  --text:#1C1C1A;--muted:#6A6961;--hint:#A09E97;
+  --accent:#1549C9;--accent-bg:#EDF1FD;--accent-bdr:#C1CFF7;
+  --danger:#D63B3B;--danger-bg:#FFF1F1;
+  --warn:#B06B10;--warn-bg:#FFF6E8;--warn-bdr:#F5D48A;
+  --green:#2D6A0F;--green-bg:#F0F7E6;--green-bdr:#BDD99A;
+  --purple:#5B30B5;--purple-bg:#F3EEFF;
+  --r-sm:6px;--r:10px;--r-lg:14px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh;}
+
+.topbar{display:flex;align-items:center;gap:12px;padding:0 20px;height:52px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:30;}
+.logo{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.02em;text-decoration:none;}
+.logo span{color:var(--accent);}
+.nav-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:99px;font-size:12px;font-weight:500;text-decoration:none;color:var(--muted);transition:all .15s;}
+.nav-pill.active{background:var(--accent-bg);color:var(--accent);font-weight:700;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.new-btn{display:flex;align-items:center;gap:5px;padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;}
+.new-btn:hover{background:#1040A8;}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--accent-bdr);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);}
+
+.page{display:grid;grid-template-columns:252px 1fr;min-height:calc(100vh - 52px);}
+
+/* SIDEBAR */
+.filter-panel{background:var(--surface);border-right:1px solid var(--border);padding:16px 14px;overflow-y:auto;}
+.fp-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--hint);display:block;margin-bottom:8px;}
+.fp-section{margin-bottom:18px;}
+.fcheck{display:flex;align-items:center;gap:7px;padding:4px 7px;border-radius:var(--r-sm);cursor:pointer;user-select:none;transition:background .12s;}
+.fcheck:hover{background:var(--bg);}
+.fcheck input{width:13px;height:13px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+.fcheck .fl{font-size:12px;flex:1;}
+.fcheck .fc{font-size:10px;color:var(--hint);background:var(--bg);padding:1px 5px;border-radius:99px;min-width:20px;text-align:center;}
+.fcheck input:checked~.fl{color:var(--accent);font-weight:600;}
+.month-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.mbtn{padding:5px;font-size:11px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);color:var(--muted);cursor:pointer;text-align:center;transition:all .12s;}
+.mbtn:hover,.mbtn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-bg);font-weight:600;}
+.clear-btn{width:100%;padding:7px;font-size:12px;border:1px solid var(--border);border-radius:var(--r-sm);background:none;color:var(--muted);cursor:pointer;margin-top:4px;transition:all .12s;}
+.clear-btn:hover{border-color:var(--danger);color:var(--danger);background:var(--danger-bg);}
+
+/* MAIN */
+.main{display:flex;flex-direction:column;overflow:hidden;}
+.search-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:52px;z-index:20;}
+.sw{position:relative;flex:1;max-width:480px;}
+.sw svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--hint);pointer-events:none;}
+.sw input{width:100%;padding:8px 10px 8px 32px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;font-family:inherit;color:var(--text);background:var(--surface);}
+.sw input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(21,73,201,.1);}
+.rcount{font-size:12px;color:var(--muted);white-space:nowrap;}
+.sort-sel{padding:7px 26px 7px 9px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px;font-family:inherit;color:var(--text);background:var(--surface);cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236A6961' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;}
+.sort-sel:focus{outline:none;border-color:var(--accent);}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--border);}
+.sc{background:var(--surface);border-radius:var(--r);padding:11px 13px;border:1px solid var(--border);}
+.sc-num{font-size:22px;font-weight:800;letter-spacing:-.03em;}
+.sc-label{font-size:11px;color:var(--muted);margin-top:1px;}
+
+.meetings-area{flex:1;overflow-y:auto;padding:16px 20px;}
+
+/* Company group header */
+.cg{margin-bottom:22px;}
+.cg-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:9px;border-bottom:2px solid var(--border);}
+.cg-logo{width:38px;height:38px;border-radius:8px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--accent);flex-shrink:0;}
+.cg-info{flex:1;}
+.cg-name{font-size:15px;font-weight:700;}
+.cg-sub{font-size:11px;color:var(--muted);}
+.bdg{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;}
+.bdg-state{background:var(--bg);color:var(--muted);border:1px solid var(--border);}
+.bdg-type{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-bdr);}
+.bdg-rev{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bdr);}
+
+/* Meeting card */
+.mc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:8px;overflow:hidden;}
+.mc:hover{border-color:var(--accent-bdr);}
+.mc.open{border-color:var(--accent-bdr);}
+.mc-bar{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;cursor:pointer;}
+.mc-date{text-align:center;min-width:40px;flex-shrink:0;}
+.mc-day{font-size:20px;font-weight:800;line-height:1;}
+.mc-mon{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;}
+.mc-yr{font-size:9px;color:var(--hint);}
+.mc-body{flex:1;min-width:0;}
+.mc-title-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px;}
+.mc-title{font-size:13px;font-weight:700;}
+.mc-poc{font-size:11px;color:var(--hint);margin-top:3px;}
+.mol-tag{padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-bdr);}
+.mc-preview{font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.mc-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+.mc-dur{font-size:10px;font-weight:600;color:var(--muted);}
+.mc-toggle{padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--border);border-radius:var(--r-sm);background:none;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .12s;}
+.mc-toggle:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg);}
+.mc-wa{padding:4px 10px;font-size:11px;font-weight:700;border:1px solid #86EFAC;border-radius:var(--r-sm);background:#F0FFF4;color:#166534;cursor:pointer;white-space:nowrap;transition:all .12s;}
+.mc-wa:hover{background:#DCFCE7;}
+
+/* ─── THE ACTUAL MOM CONTENT — matches WhatsApp format ─── */
+.mom-content{display:none;padding:0 16px 16px;border-top:1px solid var(--border);}
+.mom-content.open{display:block;}
+
+/* WhatsApp-style MOM document */
+.mom-doc{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.65;color:var(--text);background:var(--bg);border-radius:var(--r);padding:16px 18px;margin-top:12px;}
+
+.mom-doc-header{border-bottom:2px solid var(--border-md);padding-bottom:10px;margin-bottom:14px;}
+.mom-doc-title{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--text);margin-bottom:2px;}
+.mom-doc-subtitle{font-size:11px;color:var(--muted);}
+
+.mom-meta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;}
+.mom-meta-item{background:var(--surface);border-radius:var(--r-sm);padding:7px 10px;border:1px solid var(--border);}
+.mom-meta-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--hint);margin-bottom:2px;}
+.mom-meta-val{font-size:12px;font-weight:600;color:var(--text);}
+
+/* Section headers match the actual doc format */
+.mom-section{margin-bottom:14px;}
+.mom-section-hd{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);border-bottom:1px solid var(--accent-bdr);padding-bottom:4px;margin-bottom:8px;}
+
+/* Freeform bullet rows — exactly as they appear in the doc */
+.mom-line{display:flex;gap:8px;align-items:flex-start;margin-bottom:5px;font-size:12.5px;line-height:1.6;}
+.mom-bullet{flex-shrink:0;color:var(--muted);font-size:14px;line-height:1.4;}
+.mom-line-text{flex:1;}
+.mom-line-bold{font-weight:700;}
+.mom-line-italic{font-style:italic;}
+
+/* Numbered list */
+.mom-numlist{counter-reset:momlist;margin-bottom:8px;}
+.mom-numitem{display:flex;gap:8px;margin-bottom:5px;font-size:12.5px;line-height:1.6;}
+.mom-numitem::before{counter-increment:momlist;content:counter(momlist)".";font-weight:700;color:var(--accent);flex-shrink:0;min-width:18px;}
+
+/* Product/requirement table */
+.mom-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px;}
+.mom-table th{background:var(--accent-bg);color:var(--accent);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding:6px 10px;text-align:left;border:1px solid var(--accent-bdr);}
+.mom-table td{padding:6px 10px;border:1px solid var(--border);vertical-align:top;}
+.mom-table tr:nth-child(even) td{background:var(--bg);}
+.mom-table .qty{font-weight:700;color:var(--accent);}
+.mom-table .price{font-weight:600;color:var(--green);}
+
+/* PO / action footer — bold italic like in doc */
+.mom-po{margin-top:12px;padding:8px 12px;background:var(--green-bg);border:1px solid var(--green-bdr);border-radius:var(--r-sm);font-size:12px;font-weight:700;font-style:italic;color:var(--green);}
+.mom-po::before{content:"★ ";}
+
+/* Payment terms row */
+.mom-payment{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--warn-bg);border:1px solid var(--warn-bdr);border-radius:var(--r-sm);font-size:12px;margin-bottom:8px;}
+.mom-payment-label{font-weight:700;color:var(--warn);flex-shrink:0;}
+
+.mom-actions-row{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap;}
+.mabtn{display:flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:11px;font-weight:600;color:var(--muted);background:var(--surface);cursor:pointer;transition:all .12s;}
+.mabtn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg);}
+.mabtn svg{width:12px;height:12px;}
+.mabtn-wa{background:#25D366;color:#fff;border-color:#1fb659;font-weight:700;}
+.mabtn-wa:hover{background:#1fb659;color:#fff;}
+
+/* Empty state */
+.empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty svg{color:var(--border-md);margin-bottom:12px;}
+.empty h3{font-size:15px;font-weight:600;color:var(--text);margin-bottom:5px;}
+
+
+  @media (max-width: 768px) {
+    .page { grid-template-columns: 1fr; }
+    .filter-panel { display: none; }
+    .stats-row { grid-template-columns: 1fr 1fr; gap:8px; padding:10px; }
+    .mom-grid { grid-template-columns: 1fr; }
+    .mc-right { flex-direction: row; flex-wrap:wrap; }
+  }
+
+/* ── TRANSCRIPT / MOM TABS ──────────────────────────────── */
+.tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:14px;}
+.tab-btn{padding:7px 16px;font-size:12px;font-weight:600;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .15s;margin-bottom:-1px;}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-btn:hover:not(.active){color:var(--text);}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+.transcript-box{background:var(--bg);border-radius:var(--r);padding:14px;font-size:12.5px;line-height:1.7;color:var(--text);max-height:280px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;}
+.transcript-empty{color:var(--hint);font-style:italic;font-size:12px;padding:20px;text-align:center;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-md);border-radius:4px;}
+.toast-wrap{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;}
+.toast{background:#1C1C1A;color:#fff;font-size:13px;padding:9px 18px;border-radius:99px;white-space:nowrap;animation:tin .2s ease;}
+@keyframes tin{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="index.html" class="logo">Atom<span>grid</span></a>
+  <nav style="display:flex;gap:4px;margin-left:14px;">
+    <a href="index.html" class="nav-pill">● Recorder</a>
+    <a href="dashboard.html" class="nav-pill active">⊞ Dashboard</a>
+  </nav>
+  <div class="topbar-right">
+    <a href="index.html" class="new-btn">+ New MOM</a>
+    <div class="avatar">DK</div>
+  </div>
+</header>
+
+<div class="page">
+
+<!-- FILTERS -->
+<aside class="filter-panel">
+  <div class="fp-section">
+    <span class="fp-label">Meeting type</span>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Supply meeting</span><span class="fc" id="c-supply">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Client meeting</span><span class="fc" id="c-client">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Review meeting</span><span class="fc" id="c-review">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Office meeting</span><span class="fc" id="c-office">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Domestic meeting</span><span class="fc" id="c-domestic">—</span></label>
+  </div>
+
+  <div class="fp-section">
+    <span class="fp-label">Month</span>
+    <div class="month-grid">
+      <button class="mbtn active" onclick="toggleM(this,'2026-06')">Jun 26</button>
+      <button class="mbtn active" onclick="toggleM(this,'2026-05')">May 26</button>
+      <button class="mbtn active" onclick="toggleM(this,'2026-04')">Apr 26</button>
+      <button class="mbtn active" onclick="toggleM(this,'2026-03')">Mar 26</button>
+      <button class="mbtn active" onclick="toggleM(this,'2026-02')">Feb 26</button>
+      <button class="mbtn active" onclick="toggleM(this,'2026-01')">Jan 26</button>
+      <button class="mbtn active" onclick="toggleM(this,'2025-12')">Dec 25</button>
+      <button class="mbtn active" onclick="toggleM(this,'2025-11')">Nov 25</button>
+      <button class="mbtn active" onclick="toggleM(this,'2025-10')">Oct 25</button>
+      <button class="mbtn active" onclick="toggleM(this,'2025-09')">Sep 25</button>
+    </div>
+  </div>
+
+  <div class="fp-section">
+    <span class="fp-label">Reported by</span>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Deepak</span><span class="fc" id="c-Deepak">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Vikas</span><span class="fc" id="c-Vikas">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Saurabh</span><span class="fc" id="c-Saurabh">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Manvendra</span><span class="fc" id="c-Manvendra">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Abhishek</span><span class="fc" id="c-Abhishek">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Chandrashekhar</span><span class="fc" id="c-Chandrashekhar">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Viral Jain</span><span class="fc" id="c-ViralJain">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Manash</span><span class="fc" id="c-Manash">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Nitesh</span><span class="fc" id="c-Nitesh">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">CP</span><span class="fc" id="c-CP">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Kaustubh</span><span class="fc" id="c-Kaustubh">—</span></label>
+  </div>
+
+  <div class="fp-section">
+    <span class="fp-label">State / Region</span>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Gujarat</span><span class="fc" id="c-GJ">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Punjab</span><span class="fc" id="c-PB">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Maharashtra</span><span class="fc" id="c-MH">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Uttar Pradesh</span><span class="fc" id="c-UP">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Haryana</span><span class="fc" id="c-HR">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Madhya Pradesh</span><span class="fc" id="c-MP">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Rajasthan</span><span class="fc" id="c-RJ">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Hyderabad / TS</span><span class="fc" id="c-HYD">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Andhra Pradesh</span><span class="fc" id="c-AP">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Karnataka</span><span class="fc" id="c-KA">—</span></label>
+    <label class="fcheck"><input type="checkbox" checked onchange="render()"><span class="fl">Delhi / NCR</span><span class="fc" id="c-DL">—</span></label>
+  </div>
+
+  <button class="clear-btn" onclick="clearAll()">✕ Clear all filters</button>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="search-bar">
+    <div class="sw">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="q" placeholder="Search company, molecule, attendee, keyword…" oninput="render()">
+    </div>
+    <span class="rcount" id="rcount">— meetings</span>
+    <select class="sort-sel" id="sortby" onchange="render()">
+      <option value="date-desc">Newest first</option>
+      <option value="date-asc">Oldest first</option>
+      <option value="company">Company A–Z</option>
+    </select>
+  </div>
+
+  <div class="stats-row">
+    <div class="sc"><div class="sc-num" id="s-total">—</div><div class="sc-label">Total meetings</div></div>
+    <div class="sc"><div class="sc-num" id="s-cos">—</div><div class="sc-label">Companies</div></div>
+    <div class="sc"><div class="sc-num" id="s-pocs">—</div><div class="sc-label">POCs active</div></div>
+    <div class="sc"><div class="sc-num" id="s-pos">—</div><div class="sc-label">POs / orders noted</div></div>
+  </div>
+
+  <div class="meetings-area" id="area"></div>
+</main>
+</div>
+
+<div class="toast-wrap" id="tw"></div>
+
+<script type="module">
+// ── DATA — exact WhatsApp MOM format ────────────────────────────────
+// ── FIREBASE INIT ─────────────────────────────────────────────
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, getDocs, orderBy, query }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = CONFIG.FIREBASE; // loaded from config.js
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db          = getFirestore(firebaseApp);
+
+// ── MEETINGS (loaded from Firestore) ──────────────────────────
+let MEETINGS = [];
+
+async function loadMeetings() {
+  const area = document.getElementById('area');
+  area.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--muted);">
+    <div style="width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;"></div>
+    Loading meetings…</div>`;
+  try {
+    const q    = query(collection(db, 'meetings'), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    MEETINGS = snap.docs.map(doc => {
+      const d = doc.data();
+      return {
+        id: doc.id,
+        company:      d.company      || 'Unknown',
+        date:         d.date         || new Date().toISOString().slice(0,10),
+        type:         normalizeType(d.type),
+        poc:          d.reporter     || 'Team',
+        states:       ['DL'],
+        revenue:      'Est.',
+        attendee:     (d.attendees||[]).join(', ') || '—',
+        ag:           d.reporter     || 'Team',
+        established:  '—',
+        businessModel: d.businessModel || '—',
+        states_text:  d.states       || '—',
+        overview:     d.overview     || (d.transcript||'').slice(0,300) || '—',
+        currentReq:   (d.current_req ||[]).map(r=>({mol:r.mol||r, qty:r.qty||'—'})),
+        kharifPlan:   (d.kharif_plan ||[]).map(r=>({mol:r.mol||r, qty:r.qty||'—'})),
+        otherUpdates: d.other_updates || [],
+        actions:      (d.action_items||[]).map(a=>({owner:a.owner||'Team', text:a.text||a})),
+        decisions:    d.decisions    || [],
+        next:         d.next_steps   || [],
+        po:           d.po_note      || '',
+        molecules:    d.molecules    || [],
+        duration:     d.duration     || '—',
+      };
+    });
+    if (!MEETINGS.length) {
+      area.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--muted);">
+        <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;">No meetings yet</div>
+        <div style="font-size:13px;">Record your first meeting in the <a href="index.html" style="color:var(--accent);font-weight:600;">Recorder</a> — it will appear here automatically.</div>
+      </div>`;
+      updateStats([]); return;
+    }
+    render();
+  } catch(err) {
+    console.error('[Firebase]', err);
+    area.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);font-size:13px;">Could not load: ${err.message}</div>`;
+  }
+}
+
+function normalizeType(t) {
+  const l = (t||'').toLowerCase();
+  if (l.includes('supply'))   return 'supply';
+  if (l.includes('client'))   return 'client';
+  if (l.includes('review'))   return 'review';
+  if (l.includes('office'))   return 'office';
+  if (l.includes('domestic')) return 'domestic';
+  return 'supply';
+}
+
+// ── STATE ──────────────────────────────────────────────────
+let activeMonths = new Set(['2026-06','2026-05','2026-04','2026-03','2026-02','2026-01','2025-12','2025-11','2025-10','2025-09']);
+let openCards = new Set();
+
+function toggleM(btn,m){btn.classList.toggle('active');activeMonths.has(m)?activeMonths.delete(m):activeMonths.add(m);render();}
+
+function checked(containerId){
+  return Array.from(document.querySelectorAll(`#${containerId} input`)).filter(c=>c.checked).map(c=>c.closest('.fcheck').querySelector('.fl').textContent.trim());
+}
+
+function render(){
+  const q = document.getElementById('q').value.toLowerCase();
+  const sort = document.getElementById('sortby').value;
+
+  const typeMap={'Supply meeting':'supply','Client meeting':'client','Review meeting':'review','Office meeting':'office','Domestic meeting':'domestic'};
+  const pocMap={'Deepak':'Deepak','Vikas':'Vikas','Saurabh':'Saurabh','Manvendra':'Manvendra','Abhishek':'Abhishek','Chandrashekhar':'Chandrashekhar','Viral Jain':'Viral Jain','Manash':'Manash','Nitesh':'Nitesh','CP':'CP','Kaustubh':'Kaustubh'};
+  const stateMap={'Gujarat':'GJ','Punjab':'PB','Maharashtra':'MH','Uttar Pradesh':'UP','Haryana':'HR','Madhya Pradesh':'MP','Rajasthan':'RJ','Hyderabad / TS':'HYD','Andhra Pradesh':'AP','Karnataka':'KA','Delhi / NCR':'DL'};
+
+  const allowedTypes = new Set(checked('area').length ? [] : document.querySelectorAll('.fcheck') ? [] : []);
+  // re-read properly from filter panel
+  const typeChecks = Array.from(document.querySelectorAll('.filter-panel .fcheck')).slice(0,5).filter(c=>c.querySelector('input').checked).map(c=>typeMap[c.querySelector('.fl').textContent.trim()]);
+  const pocChecks = Array.from(document.querySelectorAll('.filter-panel .fcheck')).slice(5,16).filter(c=>c.querySelector('input').checked).map(c=>c.querySelector('.fl').textContent.trim());
+  const stateChecks = Array.from(document.querySelectorAll('.filter-panel .fcheck')).slice(16).filter(c=>c.querySelector('input').checked).map(c=>stateMap[c.querySelector('.fl').textContent.trim()]).filter(Boolean);
+
+  let filtered = MEETINGS.filter(m=>{
+    if(!activeMonths.has(m.date.slice(0,7))) return false;
+    if(!typeChecks.includes(m.type)) return false;
+    const pocMatch = pocChecks.some(p=>m.poc.includes(p));
+    if(!pocMatch) return false;
+    const stateMatch = m.states.some(s=>stateChecks.includes(s));
+    if(!stateMatch) return false;
+    if(q){
+      const blob=[m.company,m.poc,m.attendee,m.overview,m.businessModel,m.molecules.join(' '),
+        m.currentReq.map(r=>r.mol).join(' '),m.kharifPlan.map(r=>r.mol).join(' '),
+        m.otherUpdates.join(' ')].join(' ').toLowerCase();
+      if(!blob.includes(q)) return false;
+    }
+    return true;
+  });
+
+  if(sort==='date-asc') filtered.sort((a,b)=>a.date.localeCompare(b.date));
+  else if(sort==='date-desc') filtered.sort((a,b)=>b.date.localeCompare(a.date));
+  else if(sort==='company') filtered.sort((a,b)=>a.company.localeCompare(b.company));
+
+  // stats
+  document.getElementById('s-total').textContent=filtered.length;
+  document.getElementById('s-cos').textContent=new Set(filtered.map(m=>m.company)).size;
+  document.getElementById('s-pocs').textContent=new Set(filtered.map(m=>m.poc)).size;
+  document.getElementById('s-pos').textContent=filtered.filter(m=>m.po).length;
+  document.getElementById('rcount').textContent=`${filtered.length} meeting${filtered.length!==1?'s':''}`;
+
+  // counts
+  const typeCnt={supply:0,client:0,review:0,office:0,domestic:0};
+  const pocCnt={};const stCnt={};
+  MEETINGS.forEach(m=>{
+    typeCnt[m.type]=(typeCnt[m.type]||0)+1;
+    pocCnt[m.poc]=(pocCnt[m.poc]||0)+1;
+    m.states.forEach(s=>stCnt[s]=(stCnt[s]||0)+1);
+  });
+  ['supply','client','review','office','domestic'].forEach(t=>{const el=document.getElementById('c-'+t);if(el)el.textContent=typeCnt[t]||0;});
+  ['Deepak','Vikas','Saurabh','Manvendra','Abhishek','Chandrashekhar','Manash','Nitesh','CP','Kaustubh'].forEach(p=>{
+    const el=document.getElementById('c-'+p.replace(' ',''));
+    if(el)el.textContent=pocCnt[p]||0;
+  });
+  document.getElementById('c-ViralJain').textContent=pocCnt['Viral Jain']||0;
+  ['GJ','PB','MH','UP','HR','MP','RJ','HYD','AP','KA','DL'].forEach(s=>{const el=document.getElementById('c-'+s);if(el)el.textContent=stCnt[s]||0;});
+
+  // group by company
+  const groups={};
+  filtered.forEach(m=>{if(!groups[m.company])groups[m.company]=[];groups[m.company].push(m);});
+
+  const stL={GJ:'Gujarat',PB:'Punjab',MH:'Maharashtra',UP:'U.P.',HR:'Haryana',MP:'M.P.',RJ:'Rajasthan',HYD:'Hyderabad',AP:'A.P.',KA:'Karnataka',DL:'Delhi',WB:'W.Bengal'};
+  const tL={supply:'Supply',client:'Client',review:'Review',office:'Office',domestic:'Domestic'};
+
+  if(!filtered.length){
+    document.getElementById('area').innerHTML=`<div class="empty"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><h3>No meetings found</h3><p>Try adjusting your filters or search query</p></div>`;
+    return;
+  }
+
+  let companies=Object.keys(groups);
+  if(sort==='company') companies.sort();
+  else if(sort==='date-desc') companies.sort((a,b)=>groups[b][0].date.localeCompare(groups[a][0].date));
+  else companies.sort((a,b)=>groups[a][0].date.localeCompare(groups[b][0].date));
+
+  document.getElementById('area').innerHTML=companies.map(co=>{
+    const grp=groups[co];
+    const init=co.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    const allStates=[...new Set(grp.flatMap(m=>m.states))];
+    const allTypes=[...new Set(grp.map(m=>m.type))];
+
+    const cards=grp.map(m=>{
+      const d=new Date(m.date);
+      const isOpen=openCards.has(m.id);
+      const hasTable=m.currentReq.length>0||m.kharifPlan.length>0;
+
+      return `<div class="mc${isOpen?' open':''}" id="mc-${m.id}">
+        <div class="mc-bar" onclick="toggleCard('${m.id}')">
+          <div class="mc-date">
+            <div class="mc-day">${d.getDate()}</div>
+            <div class="mc-mon">${d.toLocaleString('en',{month:'short'})}</div>
+            <div class="mc-yr">${d.getFullYear()}</div>
+          </div>
+          <div class="mc-body">
+            <div class="mc-title-row">
+              <span class="mc-title">Meeting ${grp.indexOf(m)+1} of ${grp.length}</span>
+              <span class="bdg bdg-type">${tL[m.type]||m.type}</span>
+              ${m.molecules.slice(0,4).map(mol=>`<span class="mol-tag">${mol}</span>`).join('')}
+            </div>
+            <div class="mc-poc">Reported by <strong>${m.poc}</strong> &nbsp;·&nbsp; Attendees: ${m.attendee}</div>
+            <div class="mc-preview">${m.overview}</div>
+          </div>
+          <div class="mc-right">
+            <span class="mc-dur">${m.duration}</span>
+            <button class="mc-toggle" onclick="event.stopPropagation();toggleCard('${m.id}')">${isOpen?'▲ Close':'▼ View MOM'}</button>
+            <button class="mc-wa" onclick="event.stopPropagation();shareWA('${m.id}')">WhatsApp</button>
+          </div>
+        </div>
+
+        <div class="mom-content${isOpen?' open':''}" id="mom-${m.id}">
+          <div class="mom-doc">
+            <!-- Tab bar -->
+            <div class="tab-bar">
+              <button class="tab-btn active" onclick="switchTab(event,'mom-tab-${m.id}','tr-tab-${m.id}',this)">📋 Minutes of Meeting</button>
+              <button class="tab-btn" onclick="switchTab(event,'tr-tab-${m.id}','mom-tab-${m.id}',this)">📝 Transcript</button>
+            </div>
+            <!-- MOM tab -->
+            <div class="tab-pane active" id="mom-tab-${m.id}">
+
+            <!-- HEADER -->
+            <div class="mom-doc-header">
+              <div class="mom-doc-title">Minutes of Meeting</div>
+              <div class="mom-doc-subtitle">Atomgrid · Agro Business · ${tL[m.type]||m.type} Meeting</div>
+            </div>
+
+            <!-- META GRID -->
+            <div class="mom-meta-grid">
+              <div class="mom-meta-item"><div class="mom-meta-label">Company</div><div class="mom-meta-val">${m.company}</div></div>
+              <div class="mom-meta-item"><div class="mom-meta-label">Date</div><div class="mom-meta-val">${new Date(m.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div></div>
+              <div class="mom-meta-item"><div class="mom-meta-label">Revenue</div><div class="mom-meta-val">${m.revenue}</div></div>
+              <div class="mom-meta-item"><div class="mom-meta-label">Attendee</div><div class="mom-meta-val">${m.attendee}</div></div>
+              <div class="mom-meta-item"><div class="mom-meta-label">AG Attendee</div><div class="mom-meta-val">${m.ag}</div></div>
+              <div class="mom-meta-item"><div class="mom-meta-label">Reported by</div><div class="mom-meta-val">${m.poc}</div></div>
+            </div>
+
+            <!-- COMPANY OVERVIEW -->
+            <div class="mom-section">
+              <div class="mom-section-hd">Company Overview</div>
+              <div class="mom-line"><span class="mom-bullet">–</span><span class="mom-line-text"><strong>Business Model:</strong> ${m.businessModel}</span></div>
+              <div class="mom-line"><span class="mom-bullet">–</span><span class="mom-line-text"><strong>Established:</strong> ${m.established}</span></div>
+              <div class="mom-line"><span class="mom-bullet">–</span><span class="mom-line-text"><strong>States Operating:</strong> ${m.states_text}</span></div>
+              <div class="mom-line" style="margin-top:6px;"><span class="mom-bullet">–</span><span class="mom-line-text">${m.overview}</span></div>
+            </div>
+
+            <!-- CURRENT REQUIREMENT -->
+            ${m.currentReq.length ? `<div class="mom-section">
+              <div class="mom-section-hd">Current Requirement / Immediate</div>
+              <table class="mom-table">
+                <thead><tr><th>Molecule / Product</th><th>Quantity / Notes</th></tr></thead>
+                <tbody>${m.currentReq.map(r=>`<tr><td class="mom-line-bold">${r.mol}</td><td class="qty">${r.qty}</td></tr>`).join('')}</tbody>
+              </table>
+            </div>` : ''}
+
+            <!-- KHARIF / RABI PLANNING -->
+            ${m.kharifPlan.length ? `<div class="mom-section">
+              <div class="mom-section-hd">Kharif / Rabi Planning — Annual Consumption</div>
+              <table class="mom-table">
+                <thead><tr><th>Molecule / Product</th><th>Quantity / Notes</th></tr></thead>
+                <tbody>${m.kharifPlan.map(r=>`<tr><td class="mom-line-bold">${r.mol}</td><td class="qty">${r.qty}</td></tr>`).join('')}</tbody>
+              </table>
+            </div>` : ''}
+
+            <!-- OTHER UPDATES -->
+            ${m.otherUpdates.length ? `<div class="mom-section">
+              <div class="mom-section-hd">Other Updates / Key Insights</div>
+              <div class="mom-numlist">
+                ${m.otherUpdates.map(u=>`<div class="mom-numitem"><span class="mom-line-text">${u}</span></div>`).join('')}
+              </div>
+            </div>` : ''}
+
+            <!-- PO / ACTION NOTE -->
+            ${m.po ? `<div class="mom-po">${m.po}</div>` : ''}
+
+            <!-- ACTIONS -->
+              </div><!-- end mom-tab -->
+            <!-- Transcript tab -->
+            <div class="tab-pane" id="tr-tab-${m.id}">
+              ${m.transcript
+                ? `<div class="transcript-box">${escHtml2(m.transcript)}</div>`
+                : '<div class="transcript-empty">No transcript saved for this meeting</div>'
+              }
+            </div><!-- end tr-tab -->
+          <div class="mom-actions-row">
+              <button class="mabtn" onclick="toast('MOM text copied!')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy MOM
+              </button>
+              <button class="mabtn mabtn-wa" onclick="shareWA('${m.id}')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.557 4.126 1.533 5.857L.054 23.76a.5.5 0 0 0 .618.626l5.985-1.565A11.947 11.947 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.645-.52-5.145-1.42l-.362-.214-3.756.984.999-3.661-.236-.376A9.948 9.948 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                Share to WhatsApp
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="cg">
+      <div class="cg-head">
+        <div class="cg-logo">${init}</div>
+        <div class="cg-info">
+          <div class="cg-name">${co}</div>
+          <div class="cg-sub">${grp.length} meeting${grp.length>1?'s':''} · Revenue: ${grp[0].revenue}</div>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;">
+          ${allStates.slice(0,3).map(s=>`<span class="bdg bdg-state">${stL[s]||s}</span>`).join('')}
+          <span class="bdg bdg-rev">${allTypes.map(t=>tL[t]||t).join(' · ')}</span>
+        </div>
+      </div>
+      ${cards}
+    </div>`;
+  }).join('');
+}
+
+function toggleCard(id){
+  openCards.has(id)?openCards.delete(id):openCards.add(id);
+  render();
+  if(openCards.has(id)){setTimeout(()=>{const el=document.getElementById('mc-'+id);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},60);}
+}
+
+function shareWA(id){
+  const m=MEETINGS.find(x=>x.id===id);
+  if(!m)return;
+  const d=new Date(m.date);
+  const ds=d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  const tL={supply:'Supply',client:'Client',review:'Review',office:'Office',domestic:'Domestic'};
+
+  let txt=`*MINUTES OF MEETING*\n_Atomgrid · Agro Business_\n━━━━━━━━━━━━━━━━━━━━\n`;
+  txt+=`*Company Name:* ${m.company}\n`;
+  txt+=`*Attendee:* ${m.attendee}\n`;
+  txt+=`*AG Attendee:* ${m.ag}\n`;
+  txt+=`*Revenue:* ${m.revenue}\n`;
+  txt+=`*Date:* ${ds}\n`;
+  txt+=`*Reported by:* ${m.poc}\n\n`;
+  txt+=`*Business Model:* ${m.businessModel}\n`;
+  txt+=`*Established:* ${m.established}\n`;
+  txt+=`*States:* ${m.states_text}\n\n`;
+  txt+=`${m.overview}\n`;
+
+  if(m.currentReq.length){
+    txt+=`\n*-Current Requirement (this month):*\n`;
+    m.currentReq.forEach(r=>txt+=`- ${r.mol}${r.qty&&r.qty!=='—'?' ('+r.qty+')':''}\n`);
+  }
+  if(m.kharifPlan.length){
+    txt+=`\n*-Kharif / Rabi Planning:*\n`;
+    m.kharifPlan.forEach(r=>txt+=`- ${r.mol}${r.qty&&r.qty!=='—'?' — '+r.qty:''}\n`);
+  }
+  if(m.otherUpdates.length){
+    txt+=`\n*-Other Updates:*\n`;
+    m.otherUpdates.forEach(u=>txt+=`- ${u}\n`);
+  }
+  if(m.po) txt+=`\n_${m.po}_\n`;
+  txt+=`\n_Sent from Atomgrid MOM Recorder_`;
+
+  window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank');
+  toast('Opening WhatsApp…');
+}
+
+function clearAll(){
+  document.querySelectorAll('.filter-panel input').forEach(c=>c.checked=true);
+  document.querySelectorAll('.mbtn').forEach(b=>b.classList.add('active'));
+  activeMonths=new Set(['2026-06','2026-05','2026-04','2026-03','2026-02','2026-01','2025-12','2025-11','2025-10','2025-09']);
+  document.getElementById('q').value='';
+  render();toast('Filters cleared');
+}
+
+// ── TAB SWITCHING ───────────────────────────────────────────
+function switchTab(e, showId, hideId, btn) {
+  e.stopPropagation();
+  // switch panes
+  const show = document.getElementById(showId);
+  const hide = document.getElementById(hideId);
+  if (show) { show.classList.add('active'); }
+  if (hide) { hide.classList.remove('active'); }
+  // switch buttons
+  const tabBar = btn.closest('.tab-bar');
+  tabBar.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function escHtml2(t) {
+  if (!t) return '';
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toast(msg){
+  const w=document.getElementById('tw');
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  w.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2500);
+}
+
+// ── EXPOSE TO WINDOW ────────────────────────────────────────
+window.render      = render;
+window.switchTab   = switchTab;
+window.toggleCard  = toggleCard;
+window.toggleM     = toggleM;
+window.shareWA     = shareWA;
+window.clearAll    = clearAll;
+window.toast       = toast;
+
+loadMeetings();
+</script>
+</body>
+</html>
