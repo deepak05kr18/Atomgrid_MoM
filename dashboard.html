@@ -295,7 +295,16 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getFirestore, collection, getDocs, orderBy, query }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-const firebaseConfig = CONFIG.FIREBASE; // loaded from config.js
+const firebaseConfig = (typeof CONFIG !== 'undefined')
+  ? CONFIG.FIREBASE
+  : {
+      apiKey:            'AIzaSyAsrrRScymm5VGmISoDocCuf5VmN20wF2o',
+      authDomain:        'atomgrid-mom.firebaseapp.com',
+      projectId:         'atomgrid-mom',
+      storageBucket:     'atomgrid-mom.firebasestorage.app',
+      messagingSenderId: '258962733983',
+      appId:             '1:258962733983:web:7ee90331de02fc997adbaa'
+    };
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db          = getFirestore(firebaseApp);

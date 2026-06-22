@@ -8,3 +8,5 @@ Thumbs.db
 # Backups
 *_backup*
 *.bak
+
+# Note: netlify/functions/ IS committed to GitHub — it contains no keys

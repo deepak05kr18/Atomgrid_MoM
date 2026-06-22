@@ -535,7 +535,16 @@
 <!-- Toast -->
 <div class="toast-wrap" id="toast-wrap"></div>
 
-<script src="config.js"></script>
+<script>
+// Load config.js for localhost — on Netlify, keys are in environment variables
+// This script tag fails silently on Netlify (file not found) — that's fine
+</script>
+<script type="module">
+// Detect if running on Netlify or localhost
+const IS_NETLIFY = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+console.log('[Config] Running on:', IS_NETLIFY ? 'Netlify' : 'localhost');
+</script>
+<script src="config.js" onerror="console.log('[Config] config.js not found — using Netlify env vars')"></script>
 <script type="module">
 // ── ATTENDEE COLORS — defined first so onclick handlers can access immediately ──
 const attColors = [
@@ -552,7 +561,7 @@ let attColorIdx = 0;
 // Transcript appends live after each chunk completes
 // ══════════════════════════════════════════════════════════════
 
-const OPENAI_KEY = CONFIG.OPENAI_KEY;
+const OPENAI_KEY = (typeof CONFIG !== 'undefined') ? CONFIG.OPENAI_KEY : '';
 const CHUNK_SECONDS = 10;  // transcribe every 10 seconds
 
 // ── STATE ──────────────────────────────────────────────────
@@ -675,9 +684,18 @@ async function transcribeChunk(audioBlob) {
     formData.append('prompt', 'Agrochemical B2B sales meeting between supplier Atomgrid and customer. Speakers discuss molecules: CTPR, Tembotrione, Bispyribac, Propaquizafop, Pretilachlor, Thiamethoxam, Pendimethalin, Quizalofop, Tolfenpyrad, Tebuconazole. Business terms: MT, KL, advance payment, 90 days credit, dispatch, PO, Kharif, Rabi, job work, formulation, technical grade, bulk, price per kg, requirement.');
     formData.append('response_format', 'verbose_json');
 
-    const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+    // Use Netlify function proxy on deployed site, direct API on localhost
+    const whisperUrl = (typeof IS_NETLIFY !== 'undefined' && IS_NETLIFY)
+      ? '/.netlify/functions/whisper'
+      : 'https://api.openai.com/v1/audio/transcriptions';
+
+    const whisperHeaders = (typeof IS_NETLIFY !== 'undefined' && IS_NETLIFY)
+      ? {}  // Netlify function handles auth
+      : { 'Authorization': `Bearer ${typeof CONFIG !== 'undefined' ? CONFIG.OPENAI_KEY : OPENAI_KEY}` };
+
+    const res = await fetch(whisperUrl, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${OPENAI_KEY}` },
+      headers: whisperHeaders,
       body: formData
     });
 
@@ -1096,7 +1114,7 @@ window.toast          = toast;
 // MOM panel updates live as meeting progresses
 // ══════════════════════════════════════════════════════════════
 
-const CLAUDE_KEY = CONFIG.CLAUDE_KEY; // loaded from config.js
+const CLAUDE_KEY = (typeof CONFIG !== 'undefined') ? CONFIG.CLAUDE_KEY : '';
 const MOM_INTERVAL_SECS = 60; // regenerate MOM every 60s
 let momTimer = null;
 let lastTranscriptSent = '';
@@ -1191,14 +1209,23 @@ async function generateMOM(isFinal = false) {
   spinnerEl.style.borderTopColor = 'var(--accent)';
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    // Use Netlify function proxy on deployed site, direct API on localhost
+    const claudeUrl = (typeof IS_NETLIFY !== 'undefined' && IS_NETLIFY)
+      ? '/.netlify/functions/claude'
+      : 'https://api.anthropic.com/v1/messages';
+
+    const claudeHeaders = (typeof IS_NETLIFY !== 'undefined' && IS_NETLIFY)
+      ? { 'Content-Type': 'application/json' }
+      : {
+          'Content-Type': 'application/json',
+          'x-api-key': typeof CONFIG !== 'undefined' ? CONFIG.CLAUDE_KEY : CLAUDE_KEY,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        };
+
+    const res = await fetch(claudeUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': CLAUDE_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
+      headers: claudeHeaders,
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 2000,
@@ -1407,7 +1434,17 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getFirestore, collection, addDoc, serverTimestamp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-const firebaseConfig = CONFIG.FIREBASE; // loaded from config.js
+const firebaseConfig = (typeof CONFIG !== 'undefined')
+  ? CONFIG.FIREBASE
+  : {
+      // Fallback config for Netlify — Firebase apiKey is safe to expose (protected by Firestore rules)
+      apiKey:            'AIzaSyAsrrRScymm5VGmISoDocCuf5VmN20wF2o',
+      authDomain:        'atomgrid-mom.firebaseapp.com',
+      projectId:         'atomgrid-mom',
+      storageBucket:     'atomgrid-mom.firebasestorage.app',
+      messagingSenderId: '258962733983',
+      appId:             '1:258962733983:web:7ee90331de02fc997adbaa'
+    };
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db          = getFirestore(firebaseApp);
