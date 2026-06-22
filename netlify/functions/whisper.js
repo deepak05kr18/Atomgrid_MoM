@@ -1,42 +1,64 @@
 // Netlify serverless function — Whisper proxy
-// Keeps OPENAI_KEY on server, never exposed to browser
-// Deploy: set OPENAI_KEY in Netlify Environment Variables
+// Forwards audio chunks to OpenAI Whisper API
+// OPENAI_KEY set in Netlify → Site configuration → Environment variables
+
+const fetch = require('node-fetch');
 
 exports.handler = async (event) => {
+  // Handle CORS preflight
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers: corsHeaders, body: '' };
+  }
+
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method not allowed' };
+    return { statusCode: 405, headers: corsHeaders, body: 'Method not allowed' };
   }
 
   const OPENAI_KEY = process.env.OPENAI_KEY;
   if (!OPENAI_KEY) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'OPENAI_KEY not configured in Netlify environment variables' }) };
+    console.error('[Whisper] OPENAI_KEY not set in environment variables');
+    return {
+      statusCode: 500,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: 'OPENAI_KEY not configured. Set it in Netlify → Environment variables.' })
+    };
   }
 
   try {
-    // Forward the multipart form data directly to OpenAI
+    // Forward the raw body and content-type to OpenAI
+    const contentType = event.headers['content-type'] || event.headers['Content-Type'];
+    const bodyBuffer  = Buffer.from(event.body, event.isBase64Encoded ? 'base64' : 'binary');
+
+    console.log('[Whisper] Forwarding', bodyBuffer.length, 'bytes to OpenAI');
+
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${OPENAI_KEY}`,
-        // Forward content-type from original request (includes boundary for multipart)
-        'Content-Type': event.headers['content-type'],
+        'Content-Type': contentType,
       },
-      body: Buffer.from(event.body, event.isBase64Encoded ? 'base64' : 'utf8'),
+      body: bodyBuffer,
     });
 
     const data = await response.json();
+    console.log('[Whisper] OpenAI response status:', response.status);
 
     return {
       statusCode: response.status,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     };
   } catch (err) {
+    console.error('[Whisper] Error:', err.message);
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({ error: err.message }),
     };
   }

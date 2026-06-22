@@ -550,12 +550,16 @@
 // This script tag fails silently on Netlify (file not found) — that's fine
 </script>
 <script type="module">
-// Detect if running on Netlify or localhost
-const IS_NETLIFY = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+// Detect environment first
+const IS_NETLIFY = window.location.hostname !== 'localhost' && 
+                   window.location.hostname !== '127.0.0.1' &&
+                   !window.location.hostname.includes('192.168');
 console.log('[Config] Running on:', IS_NETLIFY ? 'Netlify' : 'localhost');
-</script>
-<script src="config.js" onerror="console.log('[Config] config.js not found — using Netlify env vars')"></script>
-<script type="module">
+
+// Load config.js only on localhost — skip entirely on Netlify to avoid MIME errors
+if (!IS_NETLIFY) {
+  await import('./config.js').catch(() => console.log('[Config] config.js not found'));
+}
 // ── ATTENDEE COLORS — defined first so onclick handlers can access immediately ──
 const attColors = [
   { bg:'#EDF1FD', color:'#1549C9' }, { bg:'#F0F7E6', color:'#2D6A0F' },
@@ -694,14 +698,17 @@ async function transcribeChunk(audioBlob) {
     formData.append('prompt', 'Atomgrid agrochemical B2B sales meeting. Hindi and English mixed. Molecules: CTPR, Tembotrione, Bispyribac Sodium, Propaquizafop, Pretilachlor, Thiamethoxam, Pendimethalin, Quizalofop, Tolfenpyrad, Tebuconazole, Glyphosate, Pyroxasulfone, Clodinafop, Pinoxaden, Metribuzin, Azoxystrobin, Hexaconazole, Pymetrozine. Terms: MT, KL, kg, advance payment, 90 days credit, LC, dispatch, PO, purchase order, Kharif, Rabi, job work, P2P, formulation, technical grade, bulk, price per kg, requirement, sample, COA, quality, supply chain, manufacturer.');
     formData.append('response_format', 'verbose_json');
 
-    // Use Netlify function proxy on deployed site, direct API on localhost
-    const whisperUrl = (typeof IS_NETLIFY !== 'undefined' && IS_NETLIFY)
-      ? '/.netlify/functions/whisper'
-      : 'https://api.openai.com/v1/audio/transcriptions';
-
-    const whisperHeaders = (typeof IS_NETLIFY !== 'undefined' && IS_NETLIFY)
-      ? {}  // Netlify function handles auth
-      : { 'Authorization': `Bearer ${typeof CONFIG !== 'undefined' ? CONFIG.OPENAI_KEY : OPENAI_KEY}` };
+    // Route to Netlify proxy or direct API based on environment
+    let whisperUrl, whisperHeaders;
+    if (IS_NETLIFY) {
+      whisperUrl     = '/.netlify/functions/whisper';
+      whisperHeaders = {}; // Netlify function adds auth server-side
+      console.log('[Whisper] Using Netlify proxy');
+    } else {
+      whisperUrl     = 'https://api.openai.com/v1/audio/transcriptions';
+      whisperHeaders = { 'Authorization': `Bearer ${typeof CONFIG !== 'undefined' ? CONFIG.OPENAI_KEY : ''}` };
+      console.log('[Whisper] Using direct API (localhost)');
+    }
 
     const res = await fetch(whisperUrl, {
       method: 'POST',
@@ -1237,19 +1244,22 @@ async function generateMOM(isFinal = false) {
   spinnerEl.style.borderTopColor = 'var(--accent)';
 
   try {
-    // Use Netlify function proxy on deployed site, direct API on localhost
-    const claudeUrl = (typeof IS_NETLIFY !== 'undefined' && IS_NETLIFY)
-      ? '/.netlify/functions/claude'
-      : 'https://api.anthropic.com/v1/messages';
-
-    const claudeHeaders = (typeof IS_NETLIFY !== 'undefined' && IS_NETLIFY)
-      ? { 'Content-Type': 'application/json' }
-      : {
-          'Content-Type': 'application/json',
-          'x-api-key': typeof CONFIG !== 'undefined' ? CONFIG.CLAUDE_KEY : CLAUDE_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        };
+    // Route to Netlify proxy or direct API based on environment
+    let claudeUrl, claudeHeaders;
+    if (IS_NETLIFY) {
+      claudeUrl     = '/.netlify/functions/claude';
+      claudeHeaders = { 'Content-Type': 'application/json' };
+      console.log('[Claude] Using Netlify proxy');
+    } else {
+      claudeUrl     = 'https://api.anthropic.com/v1/messages';
+      claudeHeaders = {
+        'Content-Type': 'application/json',
+        'x-api-key': typeof CONFIG !== 'undefined' ? CONFIG.CLAUDE_KEY : '',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      };
+      console.log('[Claude] Using direct API (localhost)');
+    }
 
     const res = await fetch(claudeUrl, {
       method: 'POST',
