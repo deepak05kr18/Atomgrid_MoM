@@ -698,15 +698,20 @@ async function transcribeChunk(audioBlob) {
     formData.append('prompt', 'Atomgrid agrochemical B2B sales meeting. Hindi and English mixed. Molecules: CTPR, Tembotrione, Bispyribac Sodium, Propaquizafop, Pretilachlor, Thiamethoxam, Pendimethalin, Quizalofop, Tolfenpyrad, Tebuconazole, Glyphosate, Pyroxasulfone, Clodinafop, Pinoxaden, Metribuzin, Azoxystrobin, Hexaconazole, Pymetrozine. Terms: MT, KL, kg, advance payment, 90 days credit, LC, dispatch, PO, purchase order, Kharif, Rabi, job work, P2P, formulation, technical grade, bulk, price per kg, requirement, sample, COA, quality, supply chain, manufacturer.');
     formData.append('response_format', 'verbose_json');
 
-    // Route to Netlify proxy or direct API based on environment
+    // Always use Netlify proxy on Netlify, direct API on localhost
+    const useProxy = window.location.hostname !== 'localhost' && 
+                     window.location.hostname !== '127.0.0.1' &&
+                     !window.location.hostname.includes('192.168');
+    
     let whisperUrl, whisperHeaders;
-    if (IS_NETLIFY) {
+    if (useProxy) {
       whisperUrl     = '/.netlify/functions/whisper';
-      whisperHeaders = {}; // Netlify function adds auth server-side
-      console.log('[Whisper] Using Netlify proxy');
+      whisperHeaders = {};
+      console.log('[Whisper] Using Netlify proxy →', whisperUrl);
     } else {
+      const key = (typeof CONFIG !== 'undefined') ? CONFIG.OPENAI_KEY : '';
       whisperUrl     = 'https://api.openai.com/v1/audio/transcriptions';
-      whisperHeaders = { 'Authorization': `Bearer ${typeof CONFIG !== 'undefined' ? CONFIG.OPENAI_KEY : ''}` };
+      whisperHeaders = { 'Authorization': `Bearer ${key}` };
       console.log('[Whisper] Using direct API (localhost)');
     }
 
@@ -1244,12 +1249,15 @@ async function generateMOM(isFinal = false) {
   spinnerEl.style.borderTopColor = 'var(--accent)';
 
   try {
-    // Route to Netlify proxy or direct API based on environment
+    // Always use Netlify proxy on Netlify, direct API on localhost
+    const useClaudeProxy = window.location.hostname !== 'localhost' && 
+                           window.location.hostname !== '127.0.0.1' &&
+                           !window.location.hostname.includes('192.168');
     let claudeUrl, claudeHeaders;
-    if (IS_NETLIFY) {
+    if (useClaudeProxy) {
       claudeUrl     = '/.netlify/functions/claude';
       claudeHeaders = { 'Content-Type': 'application/json' };
-      console.log('[Claude] Using Netlify proxy');
+      console.log('[Claude] Using Netlify proxy →', claudeUrl);
     } else {
       claudeUrl     = 'https://api.anthropic.com/v1/messages';
       claudeHeaders = {

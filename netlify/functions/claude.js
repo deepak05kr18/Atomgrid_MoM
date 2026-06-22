@@ -1,26 +1,24 @@
 // Netlify serverless function — Claude proxy
-// Keeps CLAUDE_KEY on server, never exposed to browser
+// Uses built-in fetch (no node-fetch needed on Netlify Node 18+)
 
 exports.handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      },
-      body: '',
-    };
-  }
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
 
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method not allowed' };
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers: corsHeaders, body: '' };
   }
 
   const CLAUDE_KEY = process.env.CLAUDE_KEY;
   if (!CLAUDE_KEY) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'CLAUDE_KEY not configured in Netlify environment variables' }) };
+    return {
+      statusCode: 500,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: 'CLAUDE_KEY not set in Netlify environment variables' })
+    };
   }
 
   try {
@@ -40,15 +38,13 @@ exports.handler = async (event) => {
 
     return {
       statusCode: response.status,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     };
   } catch (err) {
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({ error: err.message }),
     };
   }
