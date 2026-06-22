@@ -545,10 +545,7 @@
 <!-- Toast -->
 <div class="toast-wrap" id="toast-wrap"></div>
 
-<script>
-// Load config.js for localhost — on Netlify, keys are in environment variables
-// This script tag fails silently on Netlify (file not found) — that's fine
-</script>
+<script src="config.js"></script>
 <script type="module">
 // Detect environment first
 const IS_NETLIFY = window.location.hostname !== 'localhost' && 
@@ -556,10 +553,9 @@ const IS_NETLIFY = window.location.hostname !== 'localhost' &&
                    !window.location.hostname.includes('192.168');
 console.log('[Config] Running on:', IS_NETLIFY ? 'Netlify' : 'localhost');
 
-// Load config.js only on localhost — skip entirely on Netlify to avoid MIME errors
-if (!IS_NETLIFY) {
-  await import('./config.js').catch(() => console.log('[Config] config.js not found'));
-}
+// On localhost: CONFIG is loaded via <script src="config.js"> above
+// On Netlify: config.js doesn't exist, keys come from Netlify env vars via functions
+console.log('[Config] CONFIG available:', typeof CONFIG !== 'undefined');
 // ── ATTENDEE COLORS — defined first so onclick handlers can access immediately ──
 const attColors = [
   { bg:'#EDF1FD', color:'#1549C9' }, { bg:'#F0F7E6', color:'#2D6A0F' },
