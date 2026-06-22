@@ -426,6 +426,16 @@
         <div class="waveform" id="waveform"></div>
       </div>
 
+      <!-- Sensitivity control -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:11px;color:var(--muted);white-space:nowrap;">🎙 Sensitivity:</span>
+        <input type="range" id="gain-slider" min="1" max="8" value="3" step="0.5"
+          style="flex:1;max-width:120px;accent-color:var(--accent);"
+          oninput="adjustGain(this.value)"
+          title="Increase if voices are quiet or far from mic">
+        <span style="font-size:11px;color:var(--accent);font-weight:600;min-width:24px;" id="gain-label">3x</span>
+        <span style="font-size:10px;color:var(--hint);">↑ for quiet/far voices</span>
+      </div>
       <div class="rec-actions">
         <button class="action-btn" onclick="toast('Note added to transcript')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -562,7 +572,7 @@ let attColorIdx = 0;
 // ══════════════════════════════════════════════════════════════
 
 const OPENAI_KEY = (typeof CONFIG !== 'undefined') ? CONFIG.OPENAI_KEY : '';
-const CHUNK_SECONDS = 10;  // transcribe every 10 seconds
+const CHUNK_SECONDS = 20;  // 20s chunks — more audio = better Whisper accuracy
 
 // ── STATE ──────────────────────────────────────────────────
 let audioStream       = null;
@@ -681,7 +691,7 @@ async function transcribeChunk(audioBlob) {
     if (lang === 'English') formData.append('language', 'en');
     if (lang === 'Hindi')   formData.append('language', 'hi');
     // Hindi + EN = no language param = Whisper auto-detects (most accurate)
-    formData.append('prompt', 'Agrochemical B2B sales meeting between supplier Atomgrid and customer. Speakers discuss molecules: CTPR, Tembotrione, Bispyribac, Propaquizafop, Pretilachlor, Thiamethoxam, Pendimethalin, Quizalofop, Tolfenpyrad, Tebuconazole. Business terms: MT, KL, advance payment, 90 days credit, dispatch, PO, Kharif, Rabi, job work, formulation, technical grade, bulk, price per kg, requirement.');
+    formData.append('prompt', 'Atomgrid agrochemical B2B sales meeting. Hindi and English mixed. Molecules: CTPR, Tembotrione, Bispyribac Sodium, Propaquizafop, Pretilachlor, Thiamethoxam, Pendimethalin, Quizalofop, Tolfenpyrad, Tebuconazole, Glyphosate, Pyroxasulfone, Clodinafop, Pinoxaden, Metribuzin, Azoxystrobin, Hexaconazole, Pymetrozine. Terms: MT, KL, kg, advance payment, 90 days credit, LC, dispatch, PO, purchase order, Kharif, Rabi, job work, P2P, formulation, technical grade, bulk, price per kg, requirement, sample, COA, quality, supply chain, manufacturer.');
     formData.append('response_format', 'verbose_json');
 
     // Use Netlify function proxy on deployed site, direct API on localhost
@@ -830,10 +840,14 @@ function startChunkCycle() {
           // Check if user was actually speaking during this chunk
           const avgVol = getAverageVolume();
           console.log('[Whisper] Chunk:', (blob.size/1024).toFixed(1), 'KB | Avg volume:', avgVol.toFixed(1), 'dB');
-          if (avgVol > 15) { // only transcribe if volume above threshold
+          // Dynamic threshold — lower when gain is high (sensitive mode)
+          const gainMult = window._gainMultiplier || 3;
+          const volThreshold = Math.max(4, 12 - gainMult); // 4-11 range
+          if (avgVol > volThreshold) {
+            console.log('[Whisper] Vol', avgVol.toFixed(1), '> threshold', volThreshold, '— sending');
             transcribeChunk(blob);
           } else {
-            console.log('[Whisper] Skipping low-volume chunk — likely silence/background');
+            console.log('[Whisper] Vol', avgVol.toFixed(1), '< threshold', volThreshold, '— skipping silence');
             showNoSpeechDetected();
           }
         } else {
@@ -887,11 +901,17 @@ async function requestMicAndStart() {
   try {
     audioStream = await navigator.mediaDevices.getUserMedia({
       audio: {
-        channelCount:      1,
-        echoCancellation:  true,
-        noiseSuppression:  true,
-        autoGainControl:   true,
-        suppressLocalAudioPlayback: true  // stops mic picking up speaker output
+        channelCount:               1,
+        echoCancellation:           true,
+        noiseSuppression:           true,
+        autoGainControl:            true,   // browser boosts quiet input automatically
+        suppressLocalAudioPlayback: true,
+        // Additional constraints for better low-volume capture
+        googEchoCancellation:       true,
+        googAutoGainControl:        true,
+        googNoiseSuppression:       true,
+        googHighpassFilter:         true,   // removes low-frequency rumble
+        googAudioMirroring:         false
       }
     });
   } catch (err) {
@@ -910,11 +930,18 @@ async function requestMicAndStart() {
   const src = audioContext.createMediaStreamSource(audioStream);
   src.connect(analyser);
 
-  // Volume monitor — track if user is actually speaking
+  // Boost mic gain 3x before analysis — quiet voices become detectable
+  const gainNode = audioContext.createGain();
+  gainNode.gain.value = 3.0; // amplify signal 3x for volume detection
+  src.connect(gainNode);
+
+  // Volume monitor on boosted signal
   const volAnalyser = audioContext.createAnalyser();
   volAnalyser.fftSize = 512;
-  src.connect(volAnalyser);
+  gainNode.connect(volAnalyser);
   window._volAnalyser = volAnalyser;
+  window._gainNode = gainNode;
+  console.log('[Audio] Gain boost: 3x — quiet voices will be detected');
 
   // Full recording MediaRecorder (for downloadable audio)
   const mimeType = ['audio/webm;codecs=opus','audio/webm','audio/ogg']
@@ -1075,6 +1102,7 @@ function showMicHelp() {
 // ── PAGE LOAD: initial idle state ────────────────────────────
 // ── EXPOSE FUNCTIONS TO WINDOW (needed for type="module") ──────
 window.toggleRec      = toggleRec;
+window.adjustGain     = adjustGain;
 window.stopRec        = stopRec;
 window.setLang        = setLang;
 window.onTypeChange   = onTypeChange;
@@ -1523,6 +1551,20 @@ function showSavedBanner(company, id) {
   setTimeout(() => { if (bar.parentElement) bar.remove(); }, 8000);
 }
 
+
+
+// ── MIC GAIN / SENSITIVITY CONTROL ──────────────────────────
+function adjustGain(val) {
+  const v = parseFloat(val);
+  if (window._gainNode) {
+    window._gainNode.gain.value = v;
+    console.log('[Audio] Gain adjusted to', v + 'x');
+  }
+  const label = document.getElementById('gain-label');
+  if (label) label.textContent = v + 'x';
+  // Also adjust volume threshold proportionally
+  window._gainMultiplier = v;
+}
 
 // ── COMPANY DATABASE (from actual MOM data) ────────────────
 const COMPANIES = [
