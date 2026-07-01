@@ -158,6 +158,51 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;ba
 .empty svg{color:var(--border-md);margin-bottom:12px;}
 .empty h3{font-size:15px;font-weight:600;color:var(--text);margin-bottom:5px;}
 
+/* ── DELETE BUTTON ──────────────────────────────────────── */
+.mc-del{
+  padding:4px 8px;font-size:11px;font-weight:600;
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  background:none;color:var(--hint);cursor:pointer;
+  white-space:nowrap;transition:all .12s;
+  display:flex;align-items:center;gap:3px;
+}
+.mc-del:hover{border-color:var(--danger);color:var(--danger);background:var(--danger-bg);}
+.mc-del svg{width:11px;height:11px;flex-shrink:0;}
+
+/* Deleting state — card fades out */
+.mc.deleting{opacity:0.4;pointer-events:none;transition:opacity .3s;}
+
+/* ── LOAD MORE ──────────────────────────────────────────── */
+.load-more-wrap{text-align:center;padding:20px 0 8px;}
+.load-more-btn{
+  padding:9px 28px;font-size:13px;font-weight:600;
+  border:1px solid var(--accent-bdr);border-radius:var(--r);
+  background:var(--accent-bg);color:var(--accent);
+  cursor:pointer;transition:all .15s;
+}
+.load-more-btn:hover{background:var(--accent);color:#fff;}
+.load-more-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.load-more-hint{font-size:11px;color:var(--hint);margin-top:6px;}
+
+/* ── CONFIRM DIALOG ─────────────────────────────────────── */
+.confirm-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.45);
+  z-index:200;display:flex;align-items:center;justify-content:center;
+}
+.confirm-box{
+  background:var(--surface);border-radius:var(--r-lg);
+  padding:24px 28px;max-width:360px;width:90%;
+  box-shadow:0 8px 32px rgba(0,0,0,0.18);
+}
+.confirm-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.confirm-body{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:20px;}
+.confirm-body strong{color:var(--text);}
+.confirm-actions{display:flex;gap:8px;justify-content:flex-end;}
+.confirm-cancel{padding:8px 16px;font-size:13px;font-weight:500;border:1px solid var(--border);border-radius:var(--r-sm);background:none;color:var(--muted);cursor:pointer;}
+.confirm-cancel:hover{border-color:var(--text);color:var(--text);}
+.confirm-delete{padding:8px 18px;font-size:13px;font-weight:700;border:none;border-radius:var(--r-sm);background:var(--danger);color:#fff;cursor:pointer;}
+.confirm-delete:hover{background:#B02A2A;}
+
 
   @media (max-width: 768px) {
     .page { grid-template-columns: 1fr; }
@@ -213,18 +258,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;ba
 
   <div class="fp-section">
     <span class="fp-label">Month</span>
-    <div class="month-grid">
-      <button class="mbtn active" onclick="toggleM(this,'2026-06')">Jun 26</button>
-      <button class="mbtn active" onclick="toggleM(this,'2026-05')">May 26</button>
-      <button class="mbtn active" onclick="toggleM(this,'2026-04')">Apr 26</button>
-      <button class="mbtn active" onclick="toggleM(this,'2026-03')">Mar 26</button>
-      <button class="mbtn active" onclick="toggleM(this,'2026-02')">Feb 26</button>
-      <button class="mbtn active" onclick="toggleM(this,'2026-01')">Jan 26</button>
-      <button class="mbtn active" onclick="toggleM(this,'2025-12')">Dec 25</button>
-      <button class="mbtn active" onclick="toggleM(this,'2025-11')">Nov 25</button>
-      <button class="mbtn active" onclick="toggleM(this,'2025-10')">Oct 25</button>
-      <button class="mbtn active" onclick="toggleM(this,'2025-09')">Sep 25</button>
-    </div>
+    <div class="month-grid" id="month-grid"></div>
   </div>
 
   <div class="fp-section">
@@ -288,11 +322,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;ba
 
 <div class="toast-wrap" id="tw"></div>
 
+<!-- Delete confirm dialog -->
+<div class="confirm-overlay" id="confirm-overlay" style="display:none;">
+  <div class="confirm-box">
+    <div class="confirm-title">Delete meeting?</div>
+    <div class="confirm-body" id="confirm-body">This meeting will be permanently deleted and cannot be recovered.</div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="confirm-delete" id="confirm-delete-btn" onclick="executePendingDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 // ── DATA — exact WhatsApp MOM format ────────────────────────────────
 // ── FIREBASE INIT ─────────────────────────────────────────────
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, collection, getDocs, orderBy, query }
+import { getFirestore, collection, getDocs, orderBy, query, limit, startAfter, deleteDoc, doc }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = (typeof CONFIG !== 'undefined')
@@ -309,56 +355,102 @@ const firebaseConfig = (typeof CONFIG !== 'undefined')
 const firebaseApp = initializeApp(firebaseConfig);
 const db          = getFirestore(firebaseApp);
 
-// ── MEETINGS (loaded from Firestore) ──────────────────────────
+// ── MEETINGS (loaded from Firestore with pagination) ──────────
 let MEETINGS = [];
+const PAGE_SIZE = 20;
+let lastVisible = null;   // Firestore cursor for next page
+let allLoaded   = false;  // true when no more pages remain
+let isLoading   = false;  // prevent concurrent loads
 
-async function loadMeetings() {
+function normalizeDoc(docSnap) {
+  const d = docSnap.data();
+  return {
+    id:           docSnap.id,
+    company:      d.company       || 'Unknown',
+    date:         d.date          || new Date().toISOString().slice(0,10),
+    type:         normalizeType(d.type),
+    poc:          d.reporter      || 'Team',
+    states:       parseStates(d.states || ''),
+    revenue:      'Est.',
+    attendee:     (d.attendees||[]).join(', ') || '—',
+    ag:           d.reporter      || 'Team',
+    established:  '—',
+    businessModel: d.businessModel || '—',
+    states_text:  d.states        || '—',
+    overview:     d.overview      || (d.transcript||'').slice(0,300) || '—',
+    transcript:   d.transcript    || '',
+    currentReq:   (d.current_req  ||[]).map(r=>({mol:r.mol||r, qty:r.qty||'—'})),
+    kharifPlan:   (d.kharif_plan  ||[]).map(r=>({mol:r.mol||r, qty:r.qty||'—'})),
+    otherUpdates: d.other_updates || [],
+    actions:      (d.action_items ||[]).map(a=>({owner:a.owner||'Team', text:a.text||a})),
+    decisions:    d.decisions     || [],
+    next:         d.next_steps    || [],
+    po:           d.po_note       || '',
+    molecules:    d.molecules     || [],
+    duration:     d.duration      || '—',
+  };
+}
+
+async function loadMeetings(loadMore = false) {
+  if (isLoading) return;
+  isLoading = true;
+
   const area = document.getElementById('area');
-  area.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--muted);">
-    <div style="width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;"></div>
-    Loading meetings…</div>`;
+  const btn  = document.getElementById('load-more-btn');
+
+  if (!loadMore) {
+    // First load — show spinner, reset state
+    MEETINGS     = [];
+    lastVisible  = null;
+    allLoaded    = false;
+    area.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--muted);">
+      <div style="width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;"></div>
+      Loading meetings…</div>`;
+  } else {
+    // Loading more — disable button
+    if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+  }
+
   try {
-    const q    = query(collection(db, 'meetings'), orderBy('createdAt', 'desc'));
+    let q = query(collection(db, 'meetings'), orderBy('createdAt', 'desc'), limit(PAGE_SIZE));
+    if (loadMore && lastVisible) {
+      q = query(collection(db, 'meetings'), orderBy('createdAt', 'desc'), limit(PAGE_SIZE), startAfter(lastVisible));
+    }
+
     const snap = await getDocs(q);
-    MEETINGS = snap.docs.map(doc => {
-      const d = doc.data();
-      return {
-        id: doc.id,
-        company:      d.company      || 'Unknown',
-        date:         d.date         || new Date().toISOString().slice(0,10),
-        type:         normalizeType(d.type),
-        poc:          d.reporter     || 'Team',
-        states:       ['DL'],
-        revenue:      'Est.',
-        attendee:     (d.attendees||[]).join(', ') || '—',
-        ag:           d.reporter     || 'Team',
-        established:  '—',
-        businessModel: d.businessModel || '—',
-        states_text:  d.states       || '—',
-        overview:     d.overview     || (d.transcript||'').slice(0,300) || '—',
-        currentReq:   (d.current_req ||[]).map(r=>({mol:r.mol||r, qty:r.qty||'—'})),
-        kharifPlan:   (d.kharif_plan ||[]).map(r=>({mol:r.mol||r, qty:r.qty||'—'})),
-        otherUpdates: d.other_updates || [],
-        actions:      (d.action_items||[]).map(a=>({owner:a.owner||'Team', text:a.text||a})),
-        decisions:    d.decisions    || [],
-        next:         d.next_steps   || [],
-        po:           d.po_note      || '',
-        molecules:    d.molecules    || [],
-        duration:     d.duration     || '—',
-      };
-    });
+    const newDocs = snap.docs.map(normalizeDoc);
+
+    MEETINGS = loadMore ? [...MEETINGS, ...newDocs] : newDocs;
+    lastVisible = snap.docs[snap.docs.length - 1] || lastVisible;
+    allLoaded   = snap.docs.length < PAGE_SIZE;
+
     if (!MEETINGS.length) {
       area.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--muted);">
         <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;">No meetings yet</div>
         <div style="font-size:13px;">Record your first meeting in the <a href="index.html" style="color:var(--accent);font-weight:600;">Recorder</a> — it will appear here automatically.</div>
       </div>`;
-      updateStats([]); return;
+      updateStats([]); isLoading = false; return;
     }
+
     render();
   } catch(err) {
     console.error('[Firebase]', err);
-    area.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);font-size:13px;">Could not load: ${err.message}</div>`;
+    if (!loadMore) {
+      area.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);font-size:13px;">Could not load: ${err.message}</div>`;
+    } else {
+      toast('Failed to load more meetings — ' + err.message);
+      if (btn) { btn.disabled = false; btn.textContent = 'Load more meetings'; }
+    }
   }
+  isLoading = false;
+}
+
+function updateStats(filtered) {
+  document.getElementById('s-total').textContent = filtered.length;
+  document.getElementById('s-cos').textContent   = new Set(filtered.map(m=>m.company)).size;
+  document.getElementById('s-pocs').textContent  = new Set(filtered.map(m=>m.poc)).size;
+  document.getElementById('s-pos').textContent   = filtered.filter(m=>m.po).length;
+  document.getElementById('rcount').textContent  = `${filtered.length} meeting${filtered.length!==1?'s':''}`;
 }
 
 function normalizeType(t) {
@@ -371,8 +463,41 @@ function normalizeType(t) {
   return 'supply';
 }
 
+function parseStates(text) {
+  const map = {
+    'gujarat':'GJ','punjab':'PB','maharashtra':'MH','uttar pradesh':'UP',
+    'haryana':'HR','madhya pradesh':'MP','rajasthan':'RJ',
+    'telangana':'HYD','hyderabad':'HYD','andhra':'AP',
+    'karnataka':'KA','delhi':'DL','ncr':'DL','west bengal':'WB',
+    'gujarat':'GJ','up ':'UP'
+  };
+  const lower = (text||'').toLowerCase();
+  const found = new Set();
+  for (const [k,v] of Object.entries(map)) {
+    if (lower.includes(k)) found.add(v);
+  }
+  return found.size ? Array.from(found) : ['DL'];
+}
+
 // ── STATE ──────────────────────────────────────────────────
-let activeMonths = new Set(['2026-06','2026-05','2026-04','2026-03','2026-02','2026-01','2025-12','2025-11','2025-10','2025-09']);
+// ── DYNAMIC MONTH BUTTONS ───────────────────────────────────
+function renderMonthButtons() {
+  const grid = document.getElementById('month-grid');
+  const now = new Date();
+  const months = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = d.toISOString().slice(0, 7);
+    const label = d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+    months.push({ key, label });
+  }
+  grid.innerHTML = months.map(m =>
+    `<button class="mbtn active" onclick="toggleM(this,'${m.key}')">${m.label}</button>`
+  ).join('');
+  return new Set(months.map(m => m.key));
+}
+
+let activeMonths = renderMonthButtons();
 let openCards = new Set();
 
 function toggleM(btn,m){btn.classList.toggle('active');activeMonths.has(m)?activeMonths.delete(m):activeMonths.add(m);render();}
@@ -416,13 +541,9 @@ function render(){
   else if(sort==='company') filtered.sort((a,b)=>a.company.localeCompare(b.company));
 
   // stats
-  document.getElementById('s-total').textContent=filtered.length;
-  document.getElementById('s-cos').textContent=new Set(filtered.map(m=>m.company)).size;
-  document.getElementById('s-pocs').textContent=new Set(filtered.map(m=>m.poc)).size;
-  document.getElementById('s-pos').textContent=filtered.filter(m=>m.po).length;
-  document.getElementById('rcount').textContent=`${filtered.length} meeting${filtered.length!==1?'s':''}`;
+  updateStats(filtered);
 
-  // counts
+  // filter sidebar counts (use full MEETINGS, not filtered)
   const typeCnt={supply:0,client:0,review:0,office:0,domestic:0};
   const pocCnt={};const stCnt={};
   MEETINGS.forEach(m=>{
@@ -486,6 +607,10 @@ function render(){
             <span class="mc-dur">${m.duration}</span>
             <button class="mc-toggle" onclick="event.stopPropagation();toggleCard('${m.id}')">${isOpen?'▲ Close':'▼ View MOM'}</button>
             <button class="mc-wa" onclick="event.stopPropagation();shareWA('${m.id}')">WhatsApp</button>
+            <button class="mc-del" onclick="event.stopPropagation();confirmDelete('${m.id}','${m.company.replace(/'/g,"\\'")}')" title="Delete meeting">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              Delete
+            </button>
           </div>
         </div>
 
@@ -563,7 +688,7 @@ function render(){
               }
             </div><!-- end tr-tab -->
           <div class="mom-actions-row">
-              <button class="mabtn" onclick="toast('MOM text copied!')">
+              <button class="mabtn" onclick="copyMOM('${m.id}')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 Copy MOM
               </button>
@@ -592,6 +717,28 @@ function render(){
       ${cards}
     </div>`;
   }).join('');
+
+  // Append Load More button after the meetings list
+  const area = document.getElementById('area');
+  const existing = document.getElementById('load-more-wrap');
+  if (existing) existing.remove();
+  if (!allLoaded) {
+    const wrap = document.createElement('div');
+    wrap.id = 'load-more-wrap';
+    wrap.className = 'load-more-wrap';
+    wrap.innerHTML = `
+      <button class="load-more-btn" id="load-more-btn" onclick="loadMeetings(true)">
+        Load more meetings
+      </button>
+      <div class="load-more-hint">Showing ${MEETINGS.length} meetings · more available</div>`;
+    area.appendChild(wrap);
+  } else if (MEETINGS.length >= PAGE_SIZE) {
+    const wrap = document.createElement('div');
+    wrap.id = 'load-more-wrap';
+    wrap.className = 'load-more-wrap';
+    wrap.innerHTML = `<div class="load-more-hint">All ${MEETINGS.length} meetings loaded</div>`;
+    area.appendChild(wrap);
+  }
 }
 
 function toggleCard(id){
@@ -638,10 +785,47 @@ function shareWA(id){
   toast('Opening WhatsApp…');
 }
 
+function copyMOM(id) {
+  const m = MEETINGS.find(x => x.id === id);
+  if (!m) return;
+  const d = new Date(m.date);
+  const ds = d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+  const tL = {supply:'Supply', client:'Client', review:'Review', office:'Office', domestic:'Domestic'};
+
+  let txt = `*MINUTES OF MEETING*\n_Atomgrid · Agro Business_\n━━━━━━━━━━━━━━━━━━━━\n`;
+  txt += `*Company Name:* ${m.company}\n`;
+  txt += `*Attendee:* ${m.attendee}\n`;
+  txt += `*AG Attendee:* ${m.ag}\n`;
+  txt += `*Revenue:* ${m.revenue}\n`;
+  txt += `*Date:* ${ds}\n`;
+  txt += `*Reported by:* ${m.poc}\n\n`;
+  txt += `*Business Model:* ${m.businessModel}\n`;
+  txt += `*States:* ${m.states_text}\n\n`;
+  txt += `${m.overview}\n`;
+  if (m.currentReq.length) {
+    txt += `\n*-Current Requirement:*\n`;
+    m.currentReq.forEach(r => txt += `- ${r.mol}${r.qty && r.qty !== '—' ? ' (' + r.qty + ')' : ''}\n`);
+  }
+  if (m.kharifPlan.length) {
+    txt += `\n*-Kharif / Rabi Planning:*\n`;
+    m.kharifPlan.forEach(r => txt += `- ${r.mol}${r.qty && r.qty !== '—' ? ' — ' + r.qty : ''}\n`);
+  }
+  if (m.otherUpdates.length) {
+    txt += `\n*-Other Updates:*\n`;
+    m.otherUpdates.forEach(u => txt += `- ${u}\n`);
+  }
+  if (m.po) txt += `\n_${m.po}_\n`;
+  txt += `\n_Sent from Atomgrid MOM Recorder_`;
+
+  navigator.clipboard.writeText(txt)
+    .then(() => toast('MOM copied to clipboard'))
+    .catch(() => toast('Copy failed — use the WhatsApp button instead'));
+}
+
 function clearAll(){
   document.querySelectorAll('.filter-panel input').forEach(c=>c.checked=true);
   document.querySelectorAll('.mbtn').forEach(b=>b.classList.add('active'));
-  activeMonths=new Set(['2026-06','2026-05','2026-04','2026-03','2026-02','2026-01','2025-12','2025-11','2025-10','2025-09']);
+  activeMonths = renderMonthButtons();
   document.getElementById('q').value='';
   render();toast('Filters cleared');
 }
@@ -671,14 +855,70 @@ function toast(msg){
   w.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2500);
 }
 
+// ── DELETE MEETING ───────────────────────────────────────────
+let _pendingDeleteId = null;
+
+function confirmDelete(id, company) {
+  _pendingDeleteId = id;
+  document.getElementById('confirm-body').innerHTML =
+    `Meeting with <strong>${escHtml2(company)}</strong> will be permanently deleted and cannot be recovered.`;
+  document.getElementById('confirm-overlay').style.display = 'flex';
+}
+
+function closeConfirm() {
+  _pendingDeleteId = null;
+  document.getElementById('confirm-overlay').style.display = 'none';
+}
+
+async function executePendingDelete() {
+  if (!_pendingDeleteId) return;
+  const id = _pendingDeleteId;
+  closeConfirm();
+  await deleteMeeting(id);
+}
+
+async function deleteMeeting(id) {
+  // Visually mark card as deleting immediately
+  const card = document.getElementById('mc-' + id);
+  if (card) card.classList.add('deleting');
+
+  try {
+    await deleteDoc(doc(db, 'meetings', id));
+    // Remove from local array
+    MEETINGS = MEETINGS.filter(m => m.id !== id);
+    openCards.delete(id);
+    toast('Meeting deleted');
+    // Re-render — if the MEETINGS array is now empty, show empty state
+    if (MEETINGS.length === 0) {
+      document.getElementById('area').innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--muted);">
+        <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;">No meetings yet</div>
+        <div style="font-size:13px;">Record your first meeting in the <a href="index.html" style="color:var(--accent);font-weight:600;">Recorder</a> — it will appear here automatically.</div>
+      </div>`;
+      updateStats([]);
+    } else {
+      render();
+    }
+    console.log('[Delete] Meeting deleted:', id);
+  } catch (err) {
+    console.error('[Delete] Error:', err);
+    if (card) card.classList.remove('deleting');
+    toast('Delete failed — ' + err.message);
+  }
+}
+
 // ── EXPOSE TO WINDOW ────────────────────────────────────────
-window.render      = render;
-window.switchTab   = switchTab;
-window.toggleCard  = toggleCard;
-window.toggleM     = toggleM;
-window.shareWA     = shareWA;
-window.clearAll    = clearAll;
-window.toast       = toast;
+window.render         = render;
+window.switchTab      = switchTab;
+window.toggleCard     = toggleCard;
+window.toggleM        = toggleM;
+window.shareWA        = shareWA;
+window.copyMOM        = copyMOM;
+window.clearAll       = clearAll;
+window.toast          = toast;
+window.loadMeetings   = loadMeetings;
+window.confirmDelete  = confirmDelete;
+window.closeConfirm   = closeConfirm;
+window.executePendingDelete = executePendingDelete;
 
 loadMeetings();
 </script>

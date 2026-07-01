@@ -308,6 +308,124 @@
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 4px; }
+
+  /* ── ADD NOTE PANEL ──────────────────────────────────────── */
+  .note-panel {
+    display: none;
+    padding: 10px 20px 12px;
+    background: var(--warn-bg);
+    border-top: 1px solid var(--warn-bdr);
+    gap: 8px;
+    align-items: flex-start;
+    flex-shrink: 0;
+  }
+  .note-panel.open { display: flex; }
+  .note-panel textarea {
+    flex: 1;
+    resize: none;
+    height: 60px;
+    padding: 7px 9px;
+    font-size: 13px;
+    font-family: inherit;
+    border: 1px solid var(--warn-bdr);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .note-panel textarea:focus {
+    outline: none;
+    border-color: var(--warn);
+    box-shadow: 0 0 0 3px rgba(176,107,16,0.12);
+  }
+  .note-panel-actions { display: flex; flex-direction: column; gap: 5px; }
+  .note-add-btn {
+    padding: 6px 12px; font-size: 12px; font-weight: 700;
+    background: var(--warn); color: #fff; border: none;
+    border-radius: var(--r-sm); cursor: pointer; white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .note-add-btn:hover { background: #8A5208; }
+  .note-cancel-btn {
+    padding: 5px 12px; font-size: 11px; font-weight: 500;
+    background: none; color: var(--muted);
+    border: 1px solid var(--border); border-radius: var(--r-sm);
+    cursor: pointer; white-space: nowrap;
+  }
+  .note-cancel-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+  /* Note chip in transcript — distinct from Speaker */
+  .spk-note { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-bdr); }
+
+  /* Note counter badge on button */
+  .note-count-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 16px; height: 16px; padding: 0 4px;
+    background: var(--warn); color: #fff;
+    font-size: 9px; font-weight: 700; border-radius: 99px;
+    margin-left: 2px;
+  }
+  .edit-btn {
+    display: flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border: 1px solid var(--accent-bdr);
+    border-radius: var(--r-sm); font-size: 11px; font-weight: 600;
+    color: var(--accent); background: var(--accent-bg);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .edit-btn:hover { background: #dce6fc; }
+  .edit-btn svg { width: 12px; height: 12px; flex-shrink: 0; }
+  .edit-btn.editing { background: var(--warn-bg); color: var(--warn); border-color: var(--warn-bdr); }
+
+  /* Editable field style — looks like normal content until focused */
+  [contenteditable="true"] {
+    outline: none;
+    border-radius: 3px;
+    transition: background 0.12s, box-shadow 0.12s;
+    min-width: 20px;
+    display: inline-block;
+  }
+  [contenteditable="true"]:hover {
+    background: rgba(21,73,201,0.05);
+  }
+  [contenteditable="true"]:focus {
+    background: var(--accent-bg);
+    box-shadow: 0 0 0 2px var(--accent-bdr);
+    padding: 0 3px;
+  }
+
+  /* Edit mode active — highlight the whole panel */
+  .right-panel.edit-mode .mom-body {
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 39px, var(--border) 39px, var(--border) 40px
+    );
+  }
+  .right-panel.edit-mode .section-bar {
+    background: var(--warn-bg);
+    border-bottom-color: var(--warn-bdr);
+  }
+
+  .edit-save-bar {
+    display: none;
+    align-items: center; gap: 8px;
+    padding: 8px 12px;
+    background: var(--warn-bg);
+    border-top: 1px solid var(--warn-bdr);
+    flex-shrink: 0;
+  }
+  .edit-save-bar.visible { display: flex; }
+  .edit-save-bar .hint { font-size: 11px; color: var(--warn); flex: 1; }
+  .save-edits-btn {
+    padding: 6px 14px; font-size: 12px; font-weight: 700;
+    background: var(--accent); color: #fff; border: none;
+    border-radius: var(--r-sm); cursor: pointer; transition: background 0.15s;
+  }
+  .save-edits-btn:hover { background: #1040A8; }
+  .cancel-edits-btn {
+    padding: 6px 12px; font-size: 12px; font-weight: 500;
+    background: none; color: var(--muted); border: 1px solid var(--border);
+    border-radius: var(--r-sm); cursor: pointer;
+  }
+  .cancel-edits-btn:hover { color: var(--danger); border-color: var(--danger); }
 </style>
 </head>
 <body>
@@ -331,6 +449,23 @@
   <aside class="left-panel">
     <div class="panel-head">
       <div class="panel-head-label">Meeting setup</div>
+
+      <!-- Reported by (SPOC identity) -->
+      <div class="form-group">
+        <label for="spoc-select">Reported by</label>
+        <select id="spoc-select">
+          <option value="">— Select your name —</option>
+          <option>Deepak</option>
+          <option>Nitesh</option>
+          <option>Manash</option>
+          <option>Viral Jain</option>
+          <option>Saurabh</option>
+          <option>CP</option>
+          <option>CS</option>
+          <option>Dipanshu</option>
+          <option>Nikunj</option>
+        </select>
+      </div>
 
       <!-- Company search -->
       <div class="form-group">
@@ -437,26 +572,24 @@
         <span style="font-size:10px;color:var(--hint);">↑ for quiet/far voices</span>
       </div>
       <div class="rec-actions">
-        <button class="action-btn" onclick="toast('Note added to transcript')">
+        <button class="action-btn" id="add-note-btn" onclick="toggleNotePanel()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           Add note
-        </button>
-        <button class="action-btn" onclick="flagAction()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-          Flag action item
-        </button>
-        <button class="action-btn" onclick="toast('Decision marked in MOM')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          Mark decision
-        </button>
-        <button class="action-btn" onclick="toast('Requirement noted in MOM')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-          Note requirement
+          <span class="note-count-badge" id="note-count-badge" style="display:none;">0</span>
         </button>
         <button class="stop-btn" onclick="stopRec()">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
           Stop &amp; finalise
         </button>
+      </div>
+    </div>
+
+    <!-- NOTE INPUT PANEL — slides open when Add note is clicked -->
+    <div class="note-panel" id="note-panel">
+      <textarea id="note-input" placeholder="Type your note… e.g. Customer confirmed 5 MT CTPR at ₹280/kg advance basis" maxlength="500" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();submitNote();}"></textarea>
+      <div class="note-panel-actions">
+        <button class="note-add-btn" onclick="submitNote()">Add to MOM</button>
+        <button class="note-cancel-btn" onclick="toggleNotePanel()">Cancel</button>
       </div>
     </div>
 
@@ -493,22 +626,26 @@
 
   <!-- ═══ RIGHT PANEL — MOM ═══ -->
   <aside class="right-panel">
-    <div class="section-bar">
+    <div class="section-bar" id="mom-section-bar">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <span class="section-bar-title">Minutes of meeting</span>
-      <span class="badge" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-bdr);">AI Draft</span>
-      <button class="icon-btn" style="margin-left:auto;" onclick="toast('Regenerating MOM…')">
+      <span class="badge" id="mom-ai-badge" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-bdr);">Auto Draft</span>
+      <button class="icon-btn" style="margin-left:4px;" onclick="toast('Regenerating MOM…')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.18-4.98"/></svg>
+      </button>
+      <button class="edit-btn" id="edit-mom-btn" style="margin-left:auto;display:none;" onclick="toggleEditMode()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit MOM
       </button>
     </div>
 
     <div class="mom-body" id="mom-body">
 
-      <!-- Empty state — replaced by Claude-generated MOM when recording starts -->
+      <!-- Empty state — replaced by auto-generated MOM when recording starts -->
       <div id="mom-empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px 16px;text-align:center;color:var(--hint);">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;opacity:0.4;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px;">MOM will appear here</div>
-        <div style="font-size:12px;line-height:1.6;">Claude will auto-generate the minutes<br>after your first few lines of transcript.<br><br>
+        <div style="font-size:12px;line-height:1.6;">The minutes will auto-generate<br>after your first few lines of transcript.<br><br>
           <span style="color:var(--accent);font-weight:600;">1.</span> Select company &amp; meeting type<br>
           <span style="color:var(--accent);font-weight:600;">2.</span> Click mic to start recording<br>
           <span style="color:var(--accent);font-weight:600;">3.</span> Speak — MOM fills automatically
@@ -521,22 +658,29 @@
     <div class="mom-footer">
       <div class="ai-bar">
         <div class="spinner" id="ai-spinner" style="display:none;"></div>
-        <span id="ai-status-text" style="color:var(--hint);">Claude will generate MOM after recording starts</span>
+        <span id="ai-status-text" style="color:var(--hint);">MOM will be generated after recording starts</span>
       </div>
       <div class="export-row">
-        <button class="export-btn" onclick="toast('MOM text copied!')">
+        <button class="export-btn" onclick="copyMOMText()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copy
+          Copy MOM
         </button>
-        <button class="export-btn" onclick="toast('Exporting Excel…')">
+        <button class="export-btn" onclick="toast('Excel export coming soon')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           Excel
         </button>
         <button class="export-btn wa-btn" onclick="shareWhatsApp()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.557 4.126 1.533 5.857L.054 23.76a.5.5 0 0 0 .618.626l5.985-1.565A11.947 11.947 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.645-.52-5.145-1.42l-.362-.214-3.756.984.999-3.661-.236-.376A9.948 9.948 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-          Share PDF
+          WhatsApp
         </button>
       </div>
+    </div>
+
+    <!-- Edit save/cancel bar — shown only when edit mode is active -->
+    <div class="edit-save-bar" id="edit-save-bar">
+      <span class="hint">Editing MOM — changes update the live draft</span>
+      <button class="cancel-edits-btn" onclick="cancelEditMode()">Cancel</button>
+      <button class="save-edits-btn" onclick="saveEditedMOM()">Save edits</button>
     </div>
   </aside>
 
@@ -547,14 +691,13 @@
 
 <script src="config.js"></script>
 <script type="module">
-// Detect environment first
-const IS_NETLIFY = window.location.hostname !== 'localhost' && 
+// ── ENVIRONMENT DETECTION — single source of truth ──────────
+const IS_NETLIFY = window.location.hostname !== 'localhost' &&
                    window.location.hostname !== '127.0.0.1' &&
                    !window.location.hostname.includes('192.168');
 console.log('[Config] Running on:', IS_NETLIFY ? 'Netlify' : 'localhost');
-
 // On localhost: CONFIG is loaded via <script src="config.js"> above
-// On Netlify: config.js doesn't exist, keys come from Netlify env vars via functions
+// On Netlify: config.js doesn't exist — keys come from Netlify env vars via functions
 console.log('[Config] CONFIG available:', typeof CONFIG !== 'undefined');
 // ── ATTENDEE COLORS — defined first so onclick handlers can access immediately ──
 const attColors = [
@@ -572,7 +715,12 @@ let attColorIdx = 0;
 // ══════════════════════════════════════════════════════════════
 
 const OPENAI_KEY = (typeof CONFIG !== 'undefined') ? CONFIG.OPENAI_KEY : '';
+// NOTE: CLAUDE_KEY is never sent from the browser — it lives in Netlify env vars only.
+// On localhost the key is read inline from CONFIG where needed.
 const CHUNK_SECONDS = 20;  // 20s chunks — more audio = better Whisper accuracy
+
+// ── SELECTED COMPANY — declared here so checkDraft IIFE can access it ──
+let selectedCompany = null;
 
 // ── STATE ──────────────────────────────────────────────────
 let audioStream       = null;
@@ -650,6 +798,60 @@ function startTimer() {
 
 function pauseTimer() { clearInterval(timerHandle); }
 
+// ── TRANSCRIPT DRAFT AUTOSAVE ────────────────────────────────
+// Saves transcript every 30s so accidental tab refresh doesn't lose everything
+let _autosaveHandle = null;
+function startAutosave() {
+  clearInterval(_autosaveHandle);
+  _autosaveHandle = setInterval(() => {
+    if (fullTranscript.length > 0) {
+      localStorage.setItem('ag_draft_transcript', fullTranscript);
+      localStorage.setItem('ag_draft_company',    selectedCompany || '');
+      localStorage.setItem('ag_draft_spoc',       document.getElementById('spoc-select')?.value || '');
+      localStorage.setItem('ag_draft_ts',         Date.now());
+      console.log('[Autosave] Draft saved —', fullTranscript.length, 'chars');
+    }
+  }, 30000);
+}
+function stopAutosave() { clearInterval(_autosaveHandle); }
+function clearDraft()   { ['ag_draft_transcript','ag_draft_company','ag_draft_spoc','ag_draft_ts'].forEach(k=>localStorage.removeItem(k)); }
+
+// Check on load for an unsaved draft (< 4 hours old)
+(function checkDraft() {
+  const draft   = localStorage.getItem('ag_draft_transcript');
+  const draftTs = parseInt(localStorage.getItem('ag_draft_ts') || '0');
+  const draftCo = localStorage.getItem('ag_draft_company') || '';
+  if (!draft || draft.length < 30) return;
+  if (Date.now() - draftTs > 4 * 3600 * 1000) { clearDraft(); return; }
+  const mins = Math.round((Date.now() - draftTs) / 60000);
+  const restore = confirm(`You have an unsaved transcript from ${mins} minute${mins!==1?'s':''} ago (${draftCo||'unknown company'}, ${draft.length} chars). Restore it?`);
+  if (restore) {
+    fullTranscript      = draft;
+    window._fullTranscript = draft;
+    transcriptCleared   = true;
+    selectedCompany     = draftCo;
+    if (draftCo) {
+      document.getElementById('company-input').value = draftCo;
+      document.getElementById('company-display').textContent = '— ' + draftCo;
+    }
+    const savedSpoc = localStorage.getItem('ag_draft_spoc');
+    if (savedSpoc) { const s = document.getElementById('spoc-select'); if (s) s.value = savedSpoc; }
+    // Render draft lines into transcript panel
+    const scroll = document.getElementById('transcript-scroll');
+    const liveInd = document.getElementById('live-indicator');
+    const entry = document.createElement('div');
+    entry.className = 't-entry';
+    entry.innerHTML = `<div><div class="spk-chip spk-a">Draft</div></div>
+      <div class="t-body"><div class="t-text" style="color:var(--muted);font-style:italic;">[Restored draft — ${draft.length} characters]</div></div>`;
+    scroll.insertBefore(entry, liveInd);
+    const empty = document.getElementById('transcript-empty-state');
+    if (empty) empty.style.display = 'none';
+    toast('Draft restored — ' + draft.length + ' chars');
+    console.log('[Draft] Restored transcript:', draft.length, 'chars');
+  }
+  clearDraft();
+})();
+
 // ── WHISPER API CALL ─────────────────────────────────────────
 
 // ── NOISE DETECTION ──────────────────────────────────────────
@@ -691,31 +893,33 @@ async function transcribeChunk(audioBlob) {
     if (lang === 'English') formData.append('language', 'en');
     if (lang === 'Hindi')   formData.append('language', 'hi');
     // Hindi + EN = no language param = Whisper auto-detects (most accurate)
-    formData.append('prompt', 'Atomgrid agrochemical B2B sales meeting. Hindi and English mixed. Molecules: CTPR, Tembotrione, Bispyribac Sodium, Propaquizafop, Pretilachlor, Thiamethoxam, Pendimethalin, Quizalofop, Tolfenpyrad, Tebuconazole, Glyphosate, Pyroxasulfone, Clodinafop, Pinoxaden, Metribuzin, Azoxystrobin, Hexaconazole, Pymetrozine. Terms: MT, KL, kg, advance payment, 90 days credit, LC, dispatch, PO, purchase order, Kharif, Rabi, job work, P2P, formulation, technical grade, bulk, price per kg, requirement, sample, COA, quality, supply chain, manufacturer.');
+    // IMPORTANT: Whisper's "prompt" param biases what it transcribes toward the
+    // vocabulary given. Feeding it the full molecule catalogue caused Whisper to
+    // "hear" molecule names that were never actually said (hallucination), especially
+    // on quiet/noisy chunks. Keep this prompt short and generic — domain context only,
+    // no exhaustive name lists. Whisper will still transcribe correctly-pronounced
+    // molecule names on its own; it does not need every name pre-loaded to do that.
+    formData.append('prompt', 'Atomgrid agrochemical B2B sales meeting. Hindi and English mixed conversation about technicals, formulations, job work, pricing, and dispatch.');
     formData.append('response_format', 'verbose_json');
 
-    // Always use Netlify proxy on Netlify, direct API on localhost
-    const useProxy = window.location.hostname !== 'localhost' && 
-                     window.location.hostname !== '127.0.0.1' &&
-                     !window.location.hostname.includes('192.168');
-    
-    let whisperUrl, whisperHeaders;
-    if (useProxy) {
-      whisperUrl     = '/.netlify/functions/whisper';
-      whisperHeaders = {};
-      console.log('[Whisper] Using Netlify proxy →', whisperUrl);
-    } else {
-      const key = (typeof CONFIG !== 'undefined') ? CONFIG.OPENAI_KEY : '';
-      whisperUrl     = 'https://api.openai.com/v1/audio/transcriptions';
-      whisperHeaders = { 'Authorization': `Bearer ${key}` };
-      console.log('[Whisper] Using direct API (localhost)');
-    }
+    const whisperUrl     = IS_NETLIFY ? '/.netlify/functions/whisper' : 'https://api.openai.com/v1/audio/transcriptions';
+    const whisperHeaders = IS_NETLIFY ? {} : { 'Authorization': `Bearer ${(typeof CONFIG !== 'undefined') ? CONFIG.OPENAI_KEY : ''}` };
+    console.log('[Whisper] Using', IS_NETLIFY ? 'Netlify proxy' : 'direct API (localhost)');
 
     const res = await fetch(whisperUrl, {
       method: 'POST',
       headers: whisperHeaders,
       body: formData
     });
+
+    if (res.status === 429) {
+      console.warn('[Whisper] Rate limited (429) — retrying in 6s');
+      removeTranscribing();
+      isTranscribing = false;
+      // Retry: release lock first, then schedule retry via fresh entry point
+      setTimeout(() => transcribeChunk(audioBlob), 6000);
+      return; // early return — isTranscribing already false, retry scheduled
+    }
 
     if (!res.ok) {
       const err = await res.text();
@@ -827,74 +1031,127 @@ function removeTranscribing() {
 }
 
 function escHtml(t) {
-  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // Guard against null/undefined from partial Claude responses
+  return (t == null ? '' : String(t))
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // ── CHUNK RECORDING CYCLE ────────────────────────────────────
+// Volume is sampled continuously during each chunk and averaged,
+// so the silence-skip decision reflects the whole chunk window, not
+// just the instant the recorder stops.
+let _chunkVolInterval = null;   // interval that collects samples for the ACTIVE chunk
+
+function _startVolSampling(samplesArrayRef) {
+  clearInterval(_chunkVolInterval);
+  _chunkVolInterval = setInterval(() => {
+    samplesArrayRef.push(getAverageVolume());
+  }, 200); // sample every 200ms
+}
+
+function _stopVolSampling() {
+  clearInterval(_chunkVolInterval);
+}
+
+function _avgOf(samples) {
+  if (!samples.length) return 50; // default: send
+  return samples.reduce((a,b) => a + b, 0) / samples.length;
+}
+
 function startChunkCycle() {
   // Create a second MediaRecorder just for Whisper chunks
   const mimeType = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg']
     .find(m => MediaRecorder.isTypeSupported(m)) || '';
 
+  let volSamples = []; // volume samples for the currently-active chunk
+
+  function makeChunkRecorder(bufferRef) {
+    const rec = new MediaRecorder(audioStream, mimeType ? { mimeType } : {});
+    rec.ondataavailable = e => { if (e.data?.size > 0) bufferRef.push(e.data); };
+    return rec;
+  }
+
+  function finishChunk(rec, buffer, samples, isFinal = false) {
+    if (!buffer.length) return;
+    const finalMime = rec.mimeType || mimeType || 'audio/webm';
+    const blob = new Blob(buffer, { type: finalMime });
+    if (blob.size <= 50000) {
+      console.log(`[Whisper] Skipping ${isFinal ? 'final ' : ''}small chunk:`, (blob.size/1024).toFixed(1), 'KB');
+      return;
+    }
+    const avgVol = _avgOf(samples);
+    const gainMult = window._gainMultiplier || 3;
+    const volThreshold = Math.max(4, 12 - gainMult); // 4-11 range
+    console.log(`[Whisper] ${isFinal ? 'Final ' : ''}Chunk:`, (blob.size/1024).toFixed(1), 'KB | Avg volume:', avgVol.toFixed(1));
+    if (avgVol > volThreshold) {
+      console.log('[Whisper] Vol', avgVol.toFixed(1), '> threshold', volThreshold, '— sending');
+      transcribeChunk(blob);
+    } else {
+      console.log('[Whisper] Vol', avgVol.toFixed(1), '< threshold', volThreshold, '— skipping silence');
+      if (!isFinal) showNoSpeechDetected();
+    }
+  }
+
   function startNewChunk() {
     if (!isRecording) return;
     chunkBuffer = [];
-    chunkRecorder = new MediaRecorder(audioStream, mimeType ? { mimeType } : {});
-    chunkRecorder.ondataavailable = e => { if (e.data?.size > 0) chunkBuffer.push(e.data); };
-    chunkRecorder.onstop = () => {
-      if (chunkBuffer.length && isRecording) {
-        const blob = new Blob(chunkBuffer, { type: mimeType || 'audio/webm' });
-        if (blob.size > 50000) {
-          // Check if user was actually speaking during this chunk
-          const avgVol = getAverageVolume();
-          console.log('[Whisper] Chunk:', (blob.size/1024).toFixed(1), 'KB | Avg volume:', avgVol.toFixed(1), 'dB');
-          // Dynamic threshold — lower when gain is high (sensitive mode)
-          const gainMult = window._gainMultiplier || 3;
-          const volThreshold = Math.max(4, 12 - gainMult); // 4-11 range
-          if (avgVol > volThreshold) {
-            console.log('[Whisper] Vol', avgVol.toFixed(1), '> threshold', volThreshold, '— sending');
-            transcribeChunk(blob);
-          } else {
-            console.log('[Whisper] Vol', avgVol.toFixed(1), '< threshold', volThreshold, '— skipping silence');
-            showNoSpeechDetected();
-          }
-        } else {
-          console.log('[Whisper] Skipping small chunk:', (blob.size/1024).toFixed(1), 'KB');
-        }
-      }
-    };
+    volSamples = [];
+    _startVolSampling(volSamples);
+    chunkRecorder = makeChunkRecorder(chunkBuffer);
+    chunkRecorder.start();
+    chunkTimer = setTimeout(scheduleHandoff, CHUNK_SECONDS * 1000);
+  }
+
+  function scheduleHandoff() {
+    if (!chunkRecorder || chunkRecorder.state !== 'recording') return;
+
+    // NO-GAP HANDOFF: start the next recorder on the SAME stream first,
+    // then stop the current one. This means there's a brief moment where
+    // both recorders are capturing simultaneously (a little audio overlap),
+    // but there is never a moment where NEITHER is capturing — which is
+    // what previously caused speech to be lost at every chunk boundary.
+    const finishedRecorder = chunkRecorder;
+    const finishedBuffer   = chunkBuffer;
+    const finishedSamples  = volSamples;
+
+    chunkBuffer = [];
+    volSamples  = [];
+    _startVolSampling(volSamples);
+    chunkRecorder = makeChunkRecorder(chunkBuffer);
     chunkRecorder.start();
 
-    // Stop after CHUNK_SECONDS and immediately start next chunk
-    chunkTimer = setTimeout(() => {
-      if (chunkRecorder && chunkRecorder.state === 'recording') {
-        chunkRecorder.stop();
-        // Start next chunk after brief gap
-        setTimeout(startNewChunk, 300);
-      }
-    }, CHUNK_SECONDS * 1000);
+    finishedRecorder.onstop = () => finishChunk(finishedRecorder, finishedBuffer, finishedSamples);
+    finishedRecorder.stop();
+
+    // Schedule the NEXT handoff relative to the new recorder's start
+    chunkTimer = setTimeout(scheduleHandoff, CHUNK_SECONDS * 1000);
   }
 
   startNewChunk();
+
+  // Expose finishChunk/volSamples accessor for stopChunkCycle via closure variables
+  window._chunkCycleStop = () => {
+    clearTimeout(chunkTimer);
+    if (chunkRecorder && chunkRecorder.state === 'recording') {
+      const finishedRecorder = chunkRecorder;
+      const finishedBuffer   = chunkBuffer;
+      const finishedSamples  = volSamples;
+      _stopVolSampling();
+      finishedRecorder.onstop = () => finishChunk(finishedRecorder, finishedBuffer, finishedSamples, true);
+      finishedRecorder.stop();
+    } else {
+      _stopVolSampling();
+    }
+  };
 }
 
 function stopChunkCycle() {
-  clearTimeout(chunkTimer);
-  if (chunkRecorder && chunkRecorder.state === 'recording') {
-    // Transcribe whatever is left
-    chunkRecorder.ondataavailable = e => { if (e.data?.size > 0) chunkBuffer.push(e.data); };
-    chunkRecorder.onstop = () => {
-      if (chunkBuffer.length) {
-        const blob = new Blob(chunkBuffer, { type: 'audio/webm' });
-        if (blob.size > 50000) { // only if meaningful audio (>50KB)
-          console.log('[Whisper] Final chunk:', (blob.size/1024).toFixed(1), 'KB');
-          transcribeChunk(blob);
-        } else {
-          console.log('[Whisper] Final chunk too small — skipping');
-        }
-      }
-    };
-    chunkRecorder.stop();
+  if (window._chunkCycleStop) {
+    window._chunkCycleStop();
+    window._chunkCycleStop = null;
+  } else {
+    clearTimeout(chunkTimer);
+    _stopVolSampling();
   }
 }
 
@@ -967,6 +1224,18 @@ async function requestMicAndStart() {
 
   isRecording = true;
   isMicReady  = true;
+  secs        = 0;          // reset timer for each new recording
+  lineCount   = 0;          // reset line count for each new recording
+  fullTranscript    = '';   // clear transcript for each new recording
+  transcriptCleared = false;
+  speakerIdx        = 0;
+  lastTranscriptSent = '';
+  manualNotes       = [];   // clear notes for each new recording
+  window._currentMOM = null;
+  window._fullTranscript = '';
+  // Reset note badge — clear text and hide so it doesn't flash '0' on next show
+  const _nb = document.getElementById('note-count-badge');
+  if (_nb) { _nb.textContent = ''; _nb.style.display = 'none'; }
   mediaRecorder.start(500);
 
   // Start 15-second Whisper chunk cycle
@@ -989,6 +1258,7 @@ async function requestMicAndStart() {
   toast('🎙 Recording — Whisper transcribing every ' + CHUNK_SECONDS + 's in ' + langLabel);
   console.log('[Whisper] Recording started — chunk every', CHUNK_SECONDS, 'seconds');
   startMomTimer(); // Phase 4: start MOM auto-generation
+  startAutosave(); // autosave draft every 30s
 }
 
 // ── PAUSE / RESUME ───────────────────────────────────────────
@@ -1069,15 +1339,30 @@ function stopRec() {
         'Complete — ' + lineCount + ' lines transcribed';
       document.getElementById('ai-spinner').style.display = 'none';
       document.getElementById('ai-status-text').textContent =
-        '✓ Transcript ready — ' + lineCount + ' lines · Ready for Phase 4 (AI MOM)';
+        '✓ Transcript ready — ' + lineCount + ' lines · Ready for Phase 4 (Auto MOM)';
       document.getElementById('ai-status-text').style.color = 'var(--green)';
       const _durFinal = document.getElementById('mom-duration'); if (_durFinal) _durFinal.textContent = fmtTime(secs);
       window._fullTranscript = fullTranscript;
       console.log('[Phase 3 ✅] Full transcript:', fullTranscript);
       stopMomTimer();
+      stopAutosave();
       generateMOM(true); // Final MOM generation
-      // Phase 5: save to Firestore after MOM is generated
-      setTimeout(() => saveMeetingToFirestore(), 3000);
+      // Phase 5: save to Firestore — wait until both Whisper and Claude are done
+      let _saveDone = false;
+      // Declare _saveTimeout with let BEFORE the interval that references it (avoids TDZ)
+      let _saveTimeout;
+      const _waitForSave = setInterval(() => {
+        if (!isTranscribing && !isMomGenerating) {
+          clearInterval(_waitForSave);
+          clearTimeout(_saveTimeout);
+          if (!_saveDone) { _saveDone = true; saveMeetingToFirestore(); }
+        }
+      }, 500);
+      // Safety fallback — save after 15s regardless so data is never lost
+      _saveTimeout = setTimeout(() => {
+        clearInterval(_waitForSave);
+        if (!_saveDone) { _saveDone = true; saveMeetingToFirestore(); }
+      }, 15000);
       toast('✅ Done — ' + lineCount + ' lines in ' + fmtTime(secs));
     }
   }, 500);
@@ -1088,12 +1373,21 @@ function showAudioReady(url, sizeMB) {
   const old = document.getElementById('audio-ready-bar'); if (old) old.remove();
   const bar = document.createElement('div');
   bar.id = 'audio-ready-bar';
-  bar.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--green-bdr);border-radius:var(--r-lg);padding:12px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:100;font-size:12px;white-space:nowrap;';
+  bar.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--green-bdr);border-radius:var(--r-lg);padding:12px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:200;font-size:12px;white-space:nowrap;';
   bar.innerHTML = `<span style="color:var(--green);font-weight:700;">✅ Audio saved</span>
     <span style="color:var(--muted);">${sizeMB} MB</span>
-    <a href="${url}" download="meeting-${Date.now()}.webm" style="padding:5px 12px;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-bdr);border-radius:var(--r-sm);font-weight:600;text-decoration:none;">⬇ Download</a>
-    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--hint);cursor:pointer;font-size:18px;line-height:1;">×</button>`;
+    <a id="audio-download-link" href="${url}" download="meeting-${Date.now()}.webm" style="padding:5px 12px;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-bdr);border-radius:var(--r-sm);font-weight:600;text-decoration:none;">⬇ Download</a>
+    <button id="audio-ready-close" type="button" style="background:none;border:none;color:var(--hint);cursor:pointer;font-size:18px;line-height:1;">×</button>`;
   document.body.appendChild(bar);
+
+  // Use addEventListener (not an inline onclick string) so the blob URL never has to be
+  // embedded in HTML markup, and so the click reliably fires even with other fixed-position
+  // elements (like the toast stack) nearby.
+  const closeBtn = bar.querySelector('#audio-ready-close');
+  closeBtn.addEventListener('click', () => {
+    URL.revokeObjectURL(url);
+    bar.remove();
+  });
 }
 
 function showMicHelp() {
@@ -1115,8 +1409,10 @@ window.stopRec        = stopRec;
 window.setLang        = setLang;
 window.onTypeChange   = onTypeChange;
 window.addAttendee    = addAttendee;
-window.flagAction     = flagAction;
+window.toggleNotePanel = toggleNotePanel;
+window.submitNote     = submitNote;
 window.shareWhatsApp  = shareWhatsApp;
+window.copyMOMText    = copyMOMText;
 window.searchCompany  = searchCompany;
 window.selectCompany  = selectCompany;
 window.updateMeetingTitle = updateMeetingTitle;
@@ -1139,6 +1435,18 @@ window.toast          = toast;
   document.getElementById('rec-timer').textContent = '00:00:00';
   const liveInd = document.getElementById('live-indicator');
   if (liveInd) liveInd.style.display = 'none';
+})();
+
+// ── SPOC SESSION PERSISTENCE ─────────────────────────────────
+// Restore selected SPOC from previous session in same browser
+(function initSpoc() {
+  const sel = document.getElementById('spoc-select');
+  if (!sel) return;
+  const saved = sessionStorage.getItem('atomgrid_spoc');
+  if (saved) sel.value = saved;
+  sel.addEventListener('change', () => {
+    sessionStorage.setItem('atomgrid_spoc', sel.value);
+  });
 })();
 
 
@@ -1164,7 +1472,7 @@ function buildMomPrompt() {
   const date      = window._todayDate || new Date().toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
   const duration  = fmtTime(secs);
   const attendees = Array.from(document.querySelectorAll('#att-list .att-name')).map(e => e.textContent).join(', ') || 'Not specified';
-  const reporter  = 'Deepak';
+  const reporter  = document.getElementById('spoc-select')?.value || 'Deepak';
 
   return `You are an expert Atomgrid agrochemical sales meeting assistant. 
 Atomgrid is an asset-light agrochemical B2B company dealing in technicals, formulations, job work, and intermediates.
@@ -1182,7 +1490,10 @@ Meeting context:
 
 TRANSCRIPT:
 ${fullTranscript}
-
+${manualNotes.length > 0 ? `
+MANUAL NOTES ADDED BY SPOC (treat these as high-priority, verified facts — include them directly in the relevant MOM sections):
+${manualNotes.map((n, i) => `[Note ${i+1} at ${n.timeStr}]: ${n.text}`).join('\n')}
+` : ''}
 Return this exact JSON structure:
 {
   "company": "${company}",
@@ -1240,30 +1551,21 @@ async function generateMOM(isFinal = false) {
   // Show generating state
   const statusEl = document.getElementById('ai-status-text');
   const spinnerEl = document.getElementById('ai-spinner');
-  statusEl.textContent = isFinal ? 'Finalising MOM with Claude…' : 'Claude updating MOM…';
+  statusEl.textContent = isFinal ? 'Finalising MOM…' : 'Updating MOM…';
   spinnerEl.style.display = '';
   spinnerEl.style.borderTopColor = 'var(--accent)';
 
   try {
-    // Always use Netlify proxy on Netlify, direct API on localhost
-    const useClaudeProxy = window.location.hostname !== 'localhost' && 
-                           window.location.hostname !== '127.0.0.1' &&
-                           !window.location.hostname.includes('192.168');
-    let claudeUrl, claudeHeaders;
-    if (useClaudeProxy) {
-      claudeUrl     = '/.netlify/functions/claude';
-      claudeHeaders = { 'Content-Type': 'application/json' };
-      console.log('[Claude] Using Netlify proxy →', claudeUrl);
-    } else {
-      claudeUrl     = 'https://api.anthropic.com/v1/messages';
-      claudeHeaders = {
-        'Content-Type': 'application/json',
-        'x-api-key': typeof CONFIG !== 'undefined' ? CONFIG.CLAUDE_KEY : '',
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      };
-      console.log('[Claude] Using direct API (localhost)');
-    }
+    const claudeUrl     = IS_NETLIFY ? '/.netlify/functions/claude' : 'https://api.anthropic.com/v1/messages';
+    const claudeHeaders = IS_NETLIFY
+      ? { 'Content-Type': 'application/json' }
+      : {
+          'Content-Type': 'application/json',
+          'x-api-key': typeof CONFIG !== 'undefined' ? CONFIG.CLAUDE_KEY : '',
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        };
+    console.log('[Claude] Using', IS_NETLIFY ? 'Netlify proxy' : 'direct API (localhost)');
 
     const res = await fetch(claudeUrl, {
       method: 'POST',
@@ -1279,7 +1581,7 @@ async function generateMOM(isFinal = false) {
       const errText = await res.text();
       console.error('[Claude] API error:', res.status, errText);
       // Show specific error message to help debug
-      let msg = '⚠ Claude error ' + res.status;
+      let msg = '⚠ MOM generation error ' + res.status;
       try {
         const errJson = JSON.parse(errText);
         msg += ': ' + (errJson.error?.message || errText.slice(0,100));
@@ -1307,8 +1609,8 @@ async function generateMOM(isFinal = false) {
 
     renderMOM(mom);
     statusEl.textContent = isFinal
-      ? '✓ MOM finalised by Claude — ready to share'
-      : '✓ Claude updated MOM — ' + new Date().toLocaleTimeString();
+      ? '✓ MOM finalised — ready to share'
+      : '✓ MOM updated — ' + new Date().toLocaleTimeString();
     statusEl.style.color = 'var(--green)';
     spinnerEl.style.display = 'none';
 
@@ -1326,11 +1628,27 @@ async function generateMOM(isFinal = false) {
 }
 
 // ── RENDER MOM INTO RIGHT PANEL ──────────────────────────────
+// Pending update storage: if edit mode is active when Claude fires, we
+// hold the new MOM here and apply it only after the user saves or cancels.
+window._pendingMOM = null;
+
 function renderMOM(mom) {
   const body = document.getElementById('mom-body');
   // Hide empty state
   const emptyState = document.getElementById('mom-empty-state');
   if (emptyState) emptyState.style.display = 'none';
+
+  // If edit mode is active, queue the update rather than wiping the user's edits
+  if (window._editMode) {
+    window._pendingMOM = mom;
+    const statusEl = document.getElementById('ai-status-text');
+    if (statusEl) {
+      statusEl.textContent = '⏸ MOM updated — save or cancel your edits to see it';
+      statusEl.style.color = 'var(--warn)';
+    }
+    toast('MOM updated — it will apply when you save or cancel editing');
+    return; // do NOT re-render while user is editing
+  }
 
   // Helper to create section
   const sec = (title, content) => `
@@ -1359,19 +1677,19 @@ function renderMOM(mom) {
 
   let html = '';
 
-  // Meeting info
+  // Meeting info — data-field attributes enable edit mode targeting
   html += sec('Meeting info', `
     <div class="mom-info-grid">
-      <div class="mom-info-item"><div class="mom-info-label">Type</div><div class="mom-info-val">${escHtml(mom.type||'—')}</div></div>
-      <div class="mom-info-item"><div class="mom-info-label">Date</div><div class="mom-info-val">${escHtml(mom.date||window._todayDate||'—')}</div></div>
-      <div class="mom-info-item"><div class="mom-info-label">Company</div><div class="mom-info-val">${escHtml(mom.company||'—')}</div></div>
-      <div class="mom-info-item"><div class="mom-info-label">Duration</div><div class="mom-info-val" id="mom-duration">${escHtml(mom.duration||'—')}</div></div>
+      <div class="mom-info-item"><div class="mom-info-label">Type</div><div class="mom-info-val" data-field="type">${escHtml(mom.type||'—')}</div></div>
+      <div class="mom-info-item"><div class="mom-info-label">Date</div><div class="mom-info-val" data-field="date">${escHtml(mom.date||window._todayDate||'—')}</div></div>
+      <div class="mom-info-item"><div class="mom-info-label">Company</div><div class="mom-info-val" data-field="company">${escHtml(mom.company||'—')}</div></div>
+      <div class="mom-info-item"><div class="mom-info-label">Duration</div><div class="mom-info-val" id="mom-duration" data-field="duration">${escHtml(mom.duration||'—')}</div></div>
     </div>`);
 
   // Attendees
   const attList = [mom.attendee, mom.ag_attendee].filter(Boolean).join(', ');
   html += sec('Attendees', `
-    <div class="att-chips">
+    <div class="att-chips" data-field="attendees">
       ${attList.split(',').map(a => a.trim()).filter(Boolean).map(a =>
         `<span class="att-pill">${escHtml(a)}</span>`).join('')}
     </div>`);
@@ -1379,51 +1697,261 @@ function renderMOM(mom) {
   // Overview
   if (mom.overview) {
     html += sec('Overview', `<div class="mom-row" style="background:transparent;padding:0;">
-      <span style="font-size:12px;color:var(--muted);line-height:1.6;">${escHtml(mom.overview)}</span></div>`);
+      <span style="font-size:12px;color:var(--muted);line-height:1.6;" data-field="overview">${escHtml(mom.overview)}</span></div>`);
   }
 
   // Current requirements
   if (mom.current_req?.length) {
-    html += sec('Current requirements', mom.current_req.map(r =>
-      reqCard(r.mol, r.qty || '—')).join(''));
+    html += sec('Current requirements', mom.current_req.map((r, i) =>
+      `<div class="req-card" style="margin-bottom:5px;" data-req-index="${i}">
+        <div style="font-size:10px;font-weight:700;color:var(--accent);margin-bottom:3px;" data-field="req_mol_${i}">${escHtml(r.mol)}</div>
+        <span data-field="req_qty_${i}">${escHtml(r.qty || '—')}</span>
+      </div>`).join(''));
   }
 
   // Kharif/Rabi plan
   if (mom.kharif_plan?.length) {
-    html += sec('Kharif / Rabi plan', mom.kharif_plan.map(r =>
-      row(r.mol + (r.qty ? ' — ' + r.qty : ''))).join(''));
+    html += sec('Kharif / Rabi plan', mom.kharif_plan.map((r, i) =>
+      `<div class="mom-row" data-kharif-index="${i}">
+        <span class="mom-dot dot-blue"></span>
+        <span data-field="kharif_mol_${i}">${escHtml(r.mol)}</span>
+        ${r.qty ? `<span style="color:var(--muted);margin-left:4px;" data-field="kharif_qty_${i}"> — ${escHtml(r.qty)}</span>` : ''}
+      </div>`).join(''));
   }
 
   // Other updates / key insights
   if (mom.other_updates?.length) {
-    html += sec('Key updates', mom.other_updates.map(u => row(u)).join(''));
+    html += sec('Key updates', mom.other_updates.map((u, i) =>
+      `<div class="mom-row"><span class="mom-dot dot-blue"></span><span data-field="update_${i}">${escHtml(u)}</span></div>`
+    ).join(''));
   }
 
   // Action items
   if (mom.action_items?.length) {
-    html += sec('Action items', mom.action_items.map(a =>
-      actionCard(a.owner || 'Team', a.text)).join(''));
+    html += `<div class="mom-sec" id="action-items-section">
+      <div class="mom-sec-title">Action items</div>
+      ${mom.action_items.map((a, i) => `
+        <div class="action-card" style="margin-bottom:5px;" data-action-index="${i}">
+          <div class="ac-owner" data-field="action_owner_${i}">${escHtml(a.owner || 'Team')}</div>
+          <span data-field="action_text_${i}">${escHtml(a.text)}</span>
+        </div>`).join('')}
+    </div>`;
   }
 
   // Decisions
   if (mom.decisions?.length) {
-    html += sec('Decisions taken', mom.decisions.map(d => decisionCard(d)).join(''));
+    html += sec('Decisions taken', mom.decisions.map((d, i) =>
+      `<div class="decision-card" style="margin-bottom:5px;" data-decision-index="${i}">
+        <span data-field="decision_${i}">${escHtml(d)}</span>
+      </div>`).join(''));
   }
 
   // Next steps
   if (mom.next_steps?.length) {
-    html += sec('Next steps', mom.next_steps.map(n => row(n, 'dot-gray')).join(''));
+    html += sec('Next steps', mom.next_steps.map((n, i) =>
+      `<div class="mom-row"><span class="mom-dot dot-gray"></span><span data-field="next_${i}">${escHtml(n)}</span></div>`
+    ).join(''));
   }
 
   // PO note
   if (mom.po_note) {
-    html += `<div style="padding:8px 10px;background:var(--green-bg);border:1px solid var(--green-bdr);border-radius:var(--r-sm);font-size:12px;font-weight:700;font-style:italic;color:var(--green);">★ ${escHtml(mom.po_note)}</div>`;
+    html += `<div style="padding:8px 10px;background:var(--green-bg);border:1px solid var(--green-bdr);border-radius:var(--r-sm);font-size:12px;font-weight:700;font-style:italic;color:var(--green);">
+      ★ <span data-field="po_note">${escHtml(mom.po_note)}</span>
+    </div>`;
   }
 
   body.innerHTML = html;
+
+  // Show the Edit MOM button now that a MOM exists
+  const editBtn = document.getElementById('edit-mom-btn');
+  if (editBtn) editBtn.style.display = '';
 }
 
-// ── START / STOP MOM TIMER ───────────────────────────────────
+// ── MOM EDIT MODE ─────────────────────────────────────────────
+window._editMode        = false;
+window._editSnapshot    = null; // original MOM before edits
+
+function toggleEditMode() {
+  if (window._editMode) {
+    saveEditedMOM();
+  } else {
+    enterEditMode();
+  }
+}
+
+function enterEditMode() {
+  if (!window._currentMOM) return;
+
+  // Snapshot the current MOM so Cancel can restore it
+  window._editSnapshot = JSON.parse(JSON.stringify(window._currentMOM));
+  window._editMode = true;
+
+  // Make every [data-field] element contenteditable
+  document.querySelectorAll('#mom-body [data-field]').forEach(el => {
+    el.contentEditable = 'true';
+    el.spellcheck = false;
+  });
+
+  // Visual edit mode on the panel
+  document.querySelector('.right-panel').classList.add('edit-mode');
+
+  // Update button state
+  const editBtn = document.getElementById('edit-mom-btn');
+  editBtn.classList.add('editing');
+  editBtn.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Save edits`;
+
+  // Update badge
+  const badge = document.getElementById('mom-ai-badge');
+  if (badge) { badge.textContent = 'Editing'; badge.style.background='var(--warn-bg)'; badge.style.color='var(--warn)'; badge.style.borderColor='var(--warn-bdr)'; }
+
+  // Show save/cancel bar
+  document.getElementById('edit-save-bar').classList.add('visible');
+
+  // Focus the overview field if it exists
+  const overview = document.querySelector('[data-field="overview"]');
+  if (overview) { overview.focus(); const r=document.createRange(); r.selectNodeContents(overview); r.collapse(false); const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+
+  toast('Edit mode — tap any field to change it');
+}
+
+function saveEditedMOM() {
+  if (!window._currentMOM || !window._editMode) return;
+
+  // Read all edited fields back into the MOM object
+  const mom = window._currentMOM;
+  const get = (field) => {
+    const el = document.querySelector(`[data-field="${field}"]`);
+    return el ? el.innerText.trim() : null;
+  };
+
+  // Scalar fields
+  if (get('type'))     mom.type     = get('type');
+  if (get('date'))     mom.date     = get('date');
+  if (get('company'))  mom.company  = get('company');
+  if (get('duration')) mom.duration = get('duration');
+  if (get('overview')) mom.overview = get('overview');
+  if (get('po_note'))  mom.po_note  = get('po_note');
+
+  // Current requirements
+  if (mom.current_req) {
+    mom.current_req.forEach((r, i) => {
+      const mol = get(`req_mol_${i}`); if (mol) r.mol = mol;
+      const qty = get(`req_qty_${i}`); if (qty) r.qty = qty;
+    });
+  }
+
+  // Kharif plan
+  if (mom.kharif_plan) {
+    mom.kharif_plan.forEach((r, i) => {
+      const mol = get(`kharif_mol_${i}`); if (mol) r.mol = mol;
+      // renderMOM prepends '— ' visually; strip it when reading back so raw qty is clean
+      const qty = get(`kharif_qty_${i}`);
+      if (qty !== null) r.qty = qty.replace(/^\s*—\s*/, '').trim();
+    });
+  }
+
+  // Other updates
+  if (mom.other_updates) {
+    mom.other_updates.forEach((u, i) => {
+      const val = get(`update_${i}`); if (val !== null) mom.other_updates[i] = val;
+    });
+  }
+
+  // Action items
+  if (mom.action_items) {
+    mom.action_items.forEach((a, i) => {
+      const owner = get(`action_owner_${i}`); if (owner) a.owner = owner;
+      const text  = get(`action_text_${i}`);  if (text)  a.text  = text;
+    });
+  }
+
+  // Decisions
+  if (mom.decisions) {
+    mom.decisions.forEach((d, i) => {
+      const val = get(`decision_${i}`); if (val !== null) mom.decisions[i] = val;
+    });
+  }
+
+  // Next steps
+  if (mom.next_steps) {
+    mom.next_steps.forEach((n, i) => {
+      const val = get(`next_${i}`); if (val !== null) mom.next_steps[i] = val;
+    });
+  }
+
+  window._currentMOM = mom;
+  window._editSnapshot = null;
+
+  // Re-render with updated data (exits edit mode cleanly)
+  window._editMode = false; // clear flag before renderMOM so it doesn't re-queue
+  renderMOM(mom);
+
+  // Restore UI
+  const editBtn = document.getElementById('edit-mom-btn');
+  editBtn.classList.remove('editing');
+  editBtn.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Edit MOM`;
+
+  document.querySelector('.right-panel').classList.remove('edit-mode');
+  document.getElementById('edit-save-bar').classList.remove('visible');
+
+  const badge = document.getElementById('mom-ai-badge');
+  if (badge) { badge.textContent = 'Edited'; badge.style.background='var(--accent-bg)'; badge.style.color='var(--accent)'; badge.style.borderColor='var(--accent-bdr)'; }
+
+  const statusEl = document.getElementById('ai-status-text');
+  if (statusEl) { statusEl.textContent = '✓ MOM edited and saved'; statusEl.style.color = 'var(--green)'; }
+
+  toast('Edits saved — MOM updated');
+
+  // Apply any MOM update that arrived from Claude while we were editing
+  if (window._pendingMOM) {
+    const pending = window._pendingMOM;
+    window._pendingMOM = null;
+    window._currentMOM = pending;
+    renderMOM(pending);
+    toast('Latest MOM update has been applied');
+  }
+}
+
+function cancelEditMode(silent = false) {
+  if (!window._editMode) return;
+
+  window._editMode     = false; // clear flag BEFORE renderMOM to prevent re-entrancy
+  window._pendingMOM   = null;  // discard any queued update — user cancelled, keep snapshot
+
+  // Restore original MOM if snapshot exists
+  if (window._editSnapshot) {
+    window._currentMOM = window._editSnapshot;
+    renderMOM(window._editSnapshot);
+  }
+
+  window._editSnapshot = null;
+
+  // Restore UI state
+  const editBtn = document.getElementById('edit-mom-btn');
+  if (editBtn) {
+    editBtn.classList.remove('editing');
+    editBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Edit MOM`;
+  }
+
+  document.querySelector('.right-panel')?.classList.remove('edit-mode');
+  document.getElementById('edit-save-bar')?.classList.remove('visible');
+
+  const badge = document.getElementById('mom-ai-badge');
+  if (badge) { badge.textContent = 'Auto Draft'; badge.style.background='var(--green-bg)'; badge.style.color='var(--green)'; badge.style.borderColor='var(--green-bdr)'; }
+
+  if (!silent) toast('Edit cancelled — original MOM restored');
+}
+
+// Expose edit functions to window
+window.toggleEditMode  = toggleEditMode;
+window.saveEditedMOM   = saveEditedMOM;
+window.cancelEditMode  = cancelEditMode;
 function startMomTimer() {
   clearInterval(momTimer);
   momTimer = setInterval(() => {
@@ -1499,7 +2027,7 @@ async function saveMeetingToFirestore() {
   const company  = selectedCompany || document.getElementById('company-input').value || 'Unknown';
   const type     = document.getElementById('meeting-type').options[
                      document.getElementById('meeting-type').selectedIndex].text;
-  const reporter = 'Deepak'; // Phase 6 will pull from login
+  const reporter = document.getElementById('spoc-select')?.value || 'Unknown'; // Phase 6 will pull from login
   const attendees = Array.from(document.querySelectorAll('#att-list .att-name'))
                       .map(e => e.textContent);
 
@@ -1512,6 +2040,9 @@ async function saveMeetingToFirestore() {
     transcript:  fullTranscript || '',
     createdAt:   serverTimestamp(),
     date:        new Date().toISOString().slice(0,10),
+
+    // Manual notes added during recording
+    manual_notes: manualNotes.map(n => ({ text: n.text, time: n.timeStr })),
 
     // Claude-generated MOM fields
     overview:      mom?.overview      || '',
@@ -1530,6 +2061,7 @@ async function saveMeetingToFirestore() {
   try {
     const docRef = await addDoc(collection(db, 'meetings'), meetingData);
     console.log('[Firebase] Meeting saved:', docRef.id);
+    clearDraft(); // draft saved to Firestore — remove localStorage backup
     showSavedBanner(company, docRef.id);
     return docRef.id;
   } catch (err) {
@@ -1546,9 +2078,13 @@ const MOLECULE_LIST = ['CTPR','Tembotrione','Bispyribac','Propaquizafop','Pretil
   'Metribuzin','Atrazine','Topramezone','Fipronil','Chlorpyrifos','Emamectin','Cartap'];
 
 function extractMolecules(text) {
-  return MOLECULE_LIST.filter(m =>
-    text.toLowerCase().includes(m.toLowerCase())
-  );
+  const lower = text.toLowerCase();
+  // Word-boundary match — plain substring matching could false-positive on
+  // partial words (e.g. a molecule name embedded inside another word).
+  return MOLECULE_LIST.filter(m => {
+    const escaped = m.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`\\b${escaped}\\b`).test(lower);
+  });
 }
 
 // ── SAVED BANNER ──────────────────────────────────────────────
@@ -1617,7 +2153,6 @@ const COMPANIES = [
   { name:'Aashray Chemo Pharma', rev:'Est.', model:'JW + Specialty' },
 ];
 
-let selectedCompany = null;
 
 function searchCompany(q) {
   const dd = document.getElementById('company-dropdown');
@@ -1629,19 +2164,34 @@ function searchCompany(q) {
   const matches = COMPANIES.filter(c => c.name.toLowerCase().includes(val)).slice(0, 8);
   if (!matches.length) { dd.classList.remove('open'); return; }
 
-  dd.innerHTML = matches.map(c => {
+  // Use data-attributes instead of inline onclick to safely handle names with
+  // slashes, apostrophes, or other characters that break JS string escaping.
+  dd.innerHTML = matches.map((c, idx) => {
     const init = c.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
-    return `<div class="company-option" onclick="selectCompany('${c.name.replace(/'/g,'\\\'').replace(/\//g,'\\/')}','${c.rev}')">
-      <div class="co-initials">${init}</div>
+    return `<div class="company-option" data-company-idx="${idx}">
+      <div class="co-initials">${escHtml(init)}</div>
       <div>
-        <div class="co-name">${c.name}</div>
-        <div style="font-size:10px;color:var(--hint);">${c.model}</div>
+        <div class="co-name">${escHtml(c.name)}</div>
+        <div style="font-size:10px;color:var(--hint);">${escHtml(c.model)}</div>
       </div>
-      <div class="co-rev">${c.rev}</div>
+      <div class="co-rev">${escHtml(c.rev)}</div>
     </div>`;
   }).join('');
+
+  // Store current matches so the click handler can look up by index
+  dd._matches = matches;
   dd.classList.add('open');
 }
+
+// Single delegated click handler on the dropdown — avoids inline onclick entirely
+document.getElementById('company-dropdown').addEventListener('click', e => {
+  const option = e.target.closest('.company-option');
+  if (!option) return;
+  const idx = parseInt(option.dataset.companyIdx, 10);
+  const dd = document.getElementById('company-dropdown');
+  const match = dd._matches?.[idx];
+  if (match) selectCompany(match.name, match.rev);
+});
 
 function selectCompany(name, rev) {
   selectedCompany = name;
@@ -1710,80 +2260,97 @@ function addAttendee() {
     <button class="att-remove" onclick="this.parentElement.remove()" title="Remove">×</button>`;
   document.getElementById('att-list').appendChild(div);
   inp.value = '';
-  // also add to MOM attendees
-  const pill = document.createElement('span');
-  pill.className = 'att-pill';
-  pill.textContent = name;
-  document.getElementById('mom-attendees').appendChild(pill);
-}
-
-// ── FLAG ACTION ITEM ────────────────────────────────────────
-function flagAction() {
-  const text = prompt('Describe the action item:');
-  if (!text) return;
-  const owner = prompt('Assign to (name):') || 'Team';
-  const card = document.createElement('div');
-  card.className = 'action-card';
-  card.style.marginTop = '5px';
-  card.innerHTML = `<div class="ac-owner">${owner}</div>${text}`;
-  document.querySelector('.mom-sec:nth-child(5)').appendChild(card);
-  toast('Action item added to MOM');
-}
-
-// ── WHATSAPP SHARE ──────────────────────────────────────────
-function shareWhatsApp() {
-  // If Claude generated a MOM, use that — otherwise use static template
-  if (window._currentMOM) {
-    shareWhatsAppFromMOM(window._currentMOM);
-    return;
+  // Also add pill to MOM attendees section if it exists (rendered by renderMOM)
+  const momAtts = document.getElementById('mom-attendees');
+  if (momAtts) {
+    const pill = document.createElement('span');
+    pill.className = 'att-pill';
+    pill.textContent = name;
+    momAtts.appendChild(pill);
   }
-  const company = selectedCompany || 'Customer';
-  const type = document.getElementById('meeting-type').options[document.getElementById('meeting-type').selectedIndex].text;
-  const dur = fmtTime(secs);
-
-  const text = `*MINUTES OF MEETING — Atomgrid*
-━━━━━━━━━━━━━━━━━━━━
-*Company:* ${company}
-*Type:* ${type}
-*Date:* ${dateStr}
-*Duration:* ${dur}
-*Reported by:* Deepak
-
-*DISCUSSION POINTS*
-• CTPR 18.5% SC — 5 MT plan on advance basis
-• Tembotrione bulk 2 KL — sample approved, June delivery
-• Bispyribac Sodium 3 KL planned for March
-• Pendimethalin lot ready at warehouse — dispatch confirmation awaited
-• Q3 supplier terms discussion initiated
-
-*PRODUCT REQUIREMENTS*
-Immediate (June): CTPR 5 MT · Tembo bulk 2 KL
-Upcoming (March): Bispyribac Sodium 3 KL
-
-*ACTION ITEMS*
-→ Deepak: Get logistics confirmation for Pendimethalin by tomorrow
-→ Deepak: Share CTPR advance price + dispatch timeline today
-→ Priya: Update dispatch tracker; follow up warehouse today
-
-*DECISIONS*
-✓ First 2–3 transactions on advance; 90-day credit thereafter
-✓ Tembo bulk sample to be dispatched by tomorrow
-
-*NEXT STEPS*
-• Q3 supplier terms to be closed in follow-up call
-• Bispyribac Sodium price to be shared before March
-
-_Sent from Atomgrid MOM Recorder_`;
-
-  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-  window.open(url, '_blank');
-  toast('Opening WhatsApp with MOM…');
+  // Keep _currentMOM.ag_attendee in sync so share/copy includes the new person
+  if (window._currentMOM) {
+    const existing = window._currentMOM.ag_attendee || '';
+    window._currentMOM.ag_attendee = existing ? existing + ', ' + name : name;
+  }
 }
 
+// ── MANUAL NOTES SYSTEM ──────────────────────────────────────
+// Notes are stored here, injected into the Claude prompt, and shown in transcript
+let manualNotes = []; // { text, timeStr, secs }
 
-// ── WHATSAPP SHARE FROM CLAUDE MOM ──────────────────────────
-function shareWhatsAppFromMOM(mom) {
-  const d = new Date();
+function toggleNotePanel() {
+  const panel = document.getElementById('note-panel');
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open');
+  if (!isOpen) {
+    // Opening — focus the textarea
+    const inp = document.getElementById('note-input');
+    inp.value = '';
+    inp.focus();
+  }
+}
+
+function submitNote() {
+  const inp = document.getElementById('note-input');
+  const text = inp.value.trim();
+  if (!text) { inp.focus(); return; }
+
+  const timeStr = fmtTime(secs);
+  const note = { text, timeStr, secs };
+  manualNotes.push(note);
+
+  // Show in transcript panel so the SPOC sees it was recorded
+  appendNoteToTranscript(note);
+
+  // Update the note count badge on the button
+  const badge = document.getElementById('note-count-badge');
+  badge.textContent = manualNotes.length;
+  badge.style.display = '';
+
+  // Close the panel and clear input
+  inp.value = '';
+  document.getElementById('note-panel').classList.remove('open');
+
+  toast('Note added — will be included in MOM');
+  console.log('[Notes] Added note at', timeStr, ':', text);
+
+  // Trigger MOM re-generation so the note is picked up immediately
+  // Only if we have enough transcript to generate from
+  if (fullTranscript.trim().length >= 30) {
+    lastTranscriptSent = ''; // force regeneration even if transcript hasn't changed
+    generateMOM(false);
+  }
+}
+
+function appendNoteToTranscript(note) {
+  if (!transcriptCleared) {
+    clearSampleTranscript();
+    transcriptCleared = true;
+    const empty = document.getElementById('transcript-empty-state');
+    if (empty) empty.style.display = 'none';
+  }
+  const scroll  = document.getElementById('transcript-scroll');
+  const liveInd = document.getElementById('live-indicator');
+  const entry   = document.createElement('div');
+  entry.className = 't-entry';
+  entry.innerHTML = `
+    <div>
+      <div class="spk-chip spk-note">Note</div>
+      <div class="t-time">${note.timeStr}</div>
+    </div>
+    <div class="t-body">
+      <div class="t-text" style="color:var(--warn);font-weight:500;">${escHtml(note.text)}</div>
+    </div>`;
+  scroll.insertBefore(entry, liveInd);
+  scroll.scrollTop = scroll.scrollHeight;
+}
+
+// ── SHARED MOM TEXT BUILDER ──────────────────────────────────
+// Single source of truth for WhatsApp share AND clipboard copy.
+// po_note is wrapped in WhatsApp italic markers (*_ _*) in both paths.
+function buildShareText(mom) {
+  const d  = new Date();
   const ds = d.toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
 
   let txt = `*MINUTES OF MEETING*\n_Atomgrid · Agro Business_\n━━━━━━━━━━━━━━━━━━━━\n`;
@@ -1792,7 +2359,7 @@ function shareWhatsAppFromMOM(mom) {
   txt += `*AG Attendee:* ${mom.ag_attendee||'—'}\n`;
   txt += `*Date:* ${mom.date||ds}\n`;
   txt += `*Duration:* ${mom.duration||fmtTime(secs)}\n`;
-  txt += `*Reported by:* ${mom.reported_by||'Deepak'}\n\n`;
+  txt += `*Reported by:* ${mom.reported_by || document.getElementById('spoc-select')?.value || 'Deepak'}\n\n`;
   if (mom.overview) txt += `${mom.overview}\n`;
 
   if (mom.current_req?.length) {
@@ -1819,11 +2386,34 @@ function shareWhatsAppFromMOM(mom) {
     txt += `\n*-Next Steps:*\n`;
     mom.next_steps.forEach(n => txt += `• ${n}\n`);
   }
+  // po_note: italic in both WhatsApp and clipboard (consistent)
   if (mom.po_note) txt += `\n_${mom.po_note}_\n`;
   txt += `\n_Sent from Atomgrid MOM Recorder_`;
+  return txt;
+}
 
-  window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank');
-  toast('Opening WhatsApp with AI-generated MOM…');
+// ── WHATSAPP SHARE ──────────────────────────────────────────
+function shareWhatsApp() {
+  if (window._currentMOM) {
+    const txt = buildShareText(window._currentMOM);
+    window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank');
+    toast('Opening WhatsApp with auto-generated MOM…');
+    return;
+  }
+  // MOM not ready yet — do not send fake/invented data
+  toast('⚠ MOM not ready yet — wait for it to finish, then tap again');
+}
+
+// ── COPY MOM TEXT ────────────────────────────────────────────
+function copyMOMText() {
+  if (!window._currentMOM) {
+    toast('⚠ No MOM yet — record a meeting first');
+    return;
+  }
+  const txt = buildShareText(window._currentMOM);
+  navigator.clipboard.writeText(txt)
+    .then(() => toast('✅ MOM copied to clipboard'))
+    .catch(() => toast('Copy failed — use WhatsApp share instead'));
 }
 
 // ── TOAST ───────────────────────────────────────────────────
