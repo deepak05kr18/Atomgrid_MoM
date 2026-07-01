@@ -456,14 +456,17 @@
         <select id="spoc-select">
           <option value="">— Select your name —</option>
           <option>Deepak</option>
-          <option>Nitesh</option>
-          <option>Manash</option>
-          <option>Viral Jain</option>
-          <option>Saurabh</option>
+          <option>Manvendra</option>
           <option>CP</option>
-          <option>CS</option>
-          <option>Dipanshu</option>
+          <option>Saurabh</option>
           <option>Nikunj</option>
+          <option>Vikas</option>
+          <option>Viral</option>
+          <option>CS</option>
+          <option>Sai</option>
+          <option>Manash</option>
+          <option>Nitesh</option>
+          <option>Abhishek</option>
         </select>
       </div>
 
@@ -486,9 +489,6 @@
           <option value="client">Client meeting</option>
           <option value="domestic">Domestic meeting</option>
           <option value="review">Review meeting</option>
-          <option value="ops">Operations meeting</option>
-          <option value="agm">AGM / Board meeting</option>
-          <option value="hr">HR meeting</option>
         </select>
       </div>
 
@@ -2210,7 +2210,7 @@ document.addEventListener('click', e => {
 });
 
 // ── MEETING TYPE ────────────────────────────────────────────
-const TYPE_LABELS = { supply:'Supply meeting', office:'Office meeting', client:'Client meeting', domestic:'Domestic meeting', review:'Review meeting', ops:'Operations meeting', agm:'AGM / Board', hr:'HR meeting' };
+const TYPE_LABELS = { supply:'Supply meeting', office:'Office meeting', client:'Client meeting', domestic:'Domestic meeting', review:'Review meeting' };
 
 function onTypeChange(sel) {
   const label = TYPE_LABELS[sel.value] || sel.options[sel.selectedIndex].text;
